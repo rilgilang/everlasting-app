@@ -8,9 +8,11 @@
       <div class="max-w-7xl mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+            <div
+              class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             </div>
             <div>
@@ -19,12 +21,13 @@
             </div>
           </div>
           <div class="text-sm text-gray-500">
-            {{ new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
+            {{ new Date().toLocaleDateString('id-ID', {
+              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            }) }}
           </div>
         </div>
       </div>
     </div>
-
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-6 py-12">
       <!-- Welcome Section -->
@@ -33,18 +36,18 @@
           Ucapin
         </h2>
         <p class="text-gray-600 text-lg">
-          Platform dinding ucapan real-time yang memungkinkan orang mengirim dan menampilkan pesan secara langsung dalam satu ruang bersama.
+          Platform dinding ucapan real-time yang memungkinkan orang mengirim dan menampilkan pesan secara langsung dalam
+          satu ruang bersama.
         </p>
       </div>
 
-      
+
       <!-- Continue Button -->
       <div class="flex justify-center">
-        <button
-          class="px-12 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-200 hover:shadow-xl hover:shadow-emerald-300 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-3"
-        >
-          <span v-if="!isLoading">Masuk Dashboard</span>
-        </button>
+        <NuxtLink to="/dashboard"
+          class="px-12 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-200 hover:shadow-xl hover:shadow-emerald-300 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-3">
+          <span>Masuk Dashboard</span>
+        </NuxtLink>
       </div>
     </div>
 
@@ -62,6 +65,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

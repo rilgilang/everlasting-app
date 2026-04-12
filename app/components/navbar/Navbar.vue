@@ -1,246 +1,52 @@
-<script setup lang="ts">
-import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
-
-const open = ref(true)
-
-const colorMode = useColorMode()
-
-const teams = ref([
-  {
-    label: 'Nuxt',
-    avatar: {
-      src: 'https://github.com/nuxt.png',
-      alt: 'Nuxt'
-    }
+<!-- components/Navbar.vue -->
+<script setup>
+const props = defineProps({
+  showDate: {
+    type: Boolean,
+    default: true
   },
-  {
-    label: 'Vue',
-    avatar: {
-      src: 'https://github.com/vuejs.png',
-      alt: 'Vue'
-    }
+  appName: {
+    type: String,
+    default: 'Ucapin'
   },
-  {
-    label: 'UnJS',
-    avatar: {
-      src: 'https://github.com/unjs.png',
-      alt: 'UnJS'
-    }
-  }
-])
-const selectedTeam = ref(teams.value[0])
-
-const teamsItems = computed<DropdownMenuItem[][]>(() => {
-  return [
-    teams.value.map((team, index) => ({
-      ...team,
-      kbds: ['meta', String(index + 1)],
-      onSelect() {
-        selectedTeam.value = team
-      }
-    })),
-    [
-      {
-        label: 'Create team',
-        icon: 'i-lucide-circle-plus'
-      }
-    ]
-  ]
-})
-
-function getItems(state: 'collapsed' | 'expanded') {
-  return [
-    {
-      label: 'Inbox',
-      icon: 'i-lucide-inbox',
-      badge: '4'
-    },
-    {
-      label: 'Issues',
-      icon: 'i-lucide-square-dot'
-    },
-    {
-      label: 'Activity',
-      icon: 'i-lucide-square-activity'
-    },
-    {
-      label: 'Settings',
-      icon: 'i-lucide-settings',
-      defaultOpen: true,
-      children:
-        state === 'expanded'
-          ? [
-              {
-                label: 'General',
-                icon: 'i-lucide-house'
-              },
-              {
-                label: 'Team',
-                icon: 'i-lucide-users'
-              },
-              {
-                label: 'Billing',
-                icon: 'i-lucide-credit-card'
-              }
-            ]
-          : []
-    }
-  ] satisfies NavigationMenuItem[]
-}
-
-const user = ref({
-  name: 'Benjamin Canac',
-  avatar: {
-    src: 'https://github.com/benjamincanac.png',
-    alt: 'Benjamin Canac'
+  appTagline: {
+    type: String,
+    default: 'Ucapkan pesanmu, hadirkan momen.'
   }
 })
 
-const userItems = computed<DropdownMenuItem[][]>(() => [
-  [
-    {
-      label: 'Profile',
-      icon: 'i-lucide-user'
-    },
-    {
-      label: 'Billing',
-      icon: 'i-lucide-credit-card'
-    },
-    {
-      label: 'Settings',
-      icon: 'i-lucide-settings',
-      to: '/settings'
-    }
-  ],
-  [
-    {
-      label: 'Appearance',
-      icon: 'i-lucide-sun-moon',
-      children: [
-        {
-          label: 'Light',
-          icon: 'i-lucide-sun',
-          type: 'checkbox',
-          checked: colorMode.value === 'light',
-          onUpdateChecked(checked: boolean) {
-            if (checked) {
-              colorMode.preference = 'light'
-            }
-          },
-          onSelect(e: Event) {
-            e.preventDefault()
-          }
-        },
-        {
-          label: 'Dark',
-          icon: 'i-lucide-moon',
-          type: 'checkbox',
-          checked: colorMode.value === 'dark',
-          onUpdateChecked(checked: boolean) {
-            if (checked) {
-              colorMode.preference = 'dark'
-            }
-          },
-          onSelect(e: Event) {
-            e.preventDefault()
-          }
-        }
-      ]
-    }
-  ],
-  [
-    {
-      label: 'GitHub',
-      icon: 'i-simple-icons-github',
-      to: 'https://github.com/nuxt/ui',
-      target: '_blank'
-    },
-    {
-      label: 'Log out',
-      icon: 'i-lucide-log-out'
-    }
-  ]
-])
-
-defineShortcuts(extractShortcuts(teamsItems.value))
+// Format date to Indonesian locale
+const formattedDate = computed(() => {
+  return new Date().toLocaleDateString('id-ID', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  })
+})
 </script>
 
 <template>
-  <div class="flex flex-1">
-    <USidebar
-      v-model:open="open"
-      collapsible="icon"
-      rail
-      :ui="{
-        container: 'h-full',
-        inner: 'bg-elevated/25 divide-transparent',
-        body: 'py-0'
-      }"
-    >
-      <template #header>
-        <UDropdownMenu
-          :items="teamsItems"
-          :content="{ align: 'start', collisionPadding: 12 }"
-          :ui="{ content: 'w-(--reka-dropdown-menu-trigger-width) min-w-48' }"
-        >
-          <UButton
-            v-bind="selectedTeam"
-            trailing-icon="i-lucide-chevrons-up-down"
-            color="neutral"
-            variant="ghost"
-            square
-            class="w-full data-[state=open]:bg-elevated overflow-hidden"
-            :ui="{
-              trailingIcon: 'text-dimmed ms-auto'
-            }"
-          />
-        </UDropdownMenu>
-      </template>
+  <div class="bg-white border-b border-gray-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <!-- Logo and App Info -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-800">{{ appName }}</h1>
+            <p class="text-xs text-gray-500">{{ appTagline }}</p>
+          </div>
+        </div>
 
-      <template #default="{ state }">
-        <UNavigationMenu
-          :key="state"
-          :items="getItems(state)"
-          orientation="vertical"
-          :ui="{ link: 'p-1.5 overflow-hidden' }"
-        />
-      </template>
-
-      <template #footer>
-        <UDropdownMenu
-          :items="userItems"
-          :content="{ align: 'center', collisionPadding: 12 }"
-          :ui="{ content: 'w-(--reka-dropdown-menu-trigger-width) min-w-48' }"
-        >
-          <UButton
-            v-bind="user"
-            :label="user?.name"
-            trailing-icon="i-lucide-chevrons-up-down"
-            color="neutral"
-            variant="ghost"
-            square
-            class="w-full data-[state=open]:bg-elevated overflow-hidden"
-            :ui="{
-              trailingIcon: 'text-dimmed ms-auto'
-            }"
-          />
-        </UDropdownMenu>
-      </template>
-    </USidebar>
-
-    <div class="flex-1 flex flex-col">
-      <div class="h-(--ui-header-height) shrink-0 flex items-center px-4 border-b border-default">
-        <UButton
-          icon="i-lucide-panel-left"
-          color="neutral"
-          variant="ghost"
-          aria-label="Toggle sidebar"
-          @click="open = !open"
-        />
-      </div>
-
-      <div class="flex-1 p-4">
-        <Placeholder class="size-full" />
+        <!-- Date Display -->
+        <div v-if="showDate" class="text-sm text-gray-500">
+          {{ formattedDate }}
+        </div>
       </div>
     </div>
   </div>
