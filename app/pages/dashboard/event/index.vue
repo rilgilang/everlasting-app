@@ -25,7 +25,8 @@ const events = ref([
         maxMessages: 500,
         image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop',
         status: 'upcoming',
-        organizer: 'Tech Events Indonesia'
+        organizer: 'Tech Events Indonesia',
+        qrValue: 'https://ucapin.com/event/1/register' // QR value for guests to scan
     },
     {
         id: 2,
@@ -39,7 +40,8 @@ const events = ref([
         maxMessages: 100,
         image: 'https://images.unsplash.com/photo-1558403194-611308249627?w=800&h=400&fit=crop',
         status: 'upcoming',
-        organizer: 'Design Community'
+        organizer: 'Design Community',
+        qrValue: 'https://ucapin.com/event/2/register'
     },
     {
         id: 3,
@@ -53,7 +55,8 @@ const events = ref([
         maxMessages: 150,
         image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=400&fit=crop',
         status: 'upcoming',
-        organizer: 'Startup Association'
+        organizer: 'Startup Association',
+        qrValue: 'https://ucapin.com/event/3/register'
     },
     {
         id: 4,
@@ -67,7 +70,8 @@ const events = ref([
         maxMessages: 200,
         image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop',
         status: 'upcoming',
-        organizer: 'Data Science Academy'
+        organizer: 'Data Science Academy',
+        qrValue: 'https://ucapin.com/event/4/register'
     },
     {
         id: 5,
@@ -81,7 +85,8 @@ const events = ref([
         maxMessages: 5000,
         image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=400&fit=crop',
         status: 'upcoming',
-        organizer: 'Music Events Co.'
+        organizer: 'Music Events Co.',
+        qrValue: 'https://ucapin.com/event/5/register'
     },
     {
         id: 6,
@@ -95,7 +100,8 @@ const events = ref([
         maxMessages: 300,
         image: 'https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=800&h=400&fit=crop',
         status: 'ongoing',
-        organizer: 'Digital Marketing Institute'
+        organizer: 'Digital Marketing Institute',
+        qrValue: 'https://ucapin.com/event/6/register'
     },
     {
         id: 7,
@@ -109,14 +115,42 @@ const events = ref([
         maxMessages: 200,
         image: 'https://images.unsplash.com/photo-1557425529-b1ae9c141e7d?w=800&h=400&fit=crop',
         status: 'past',
-        organizer: 'Green Community'
+        organizer: 'Green Community',
+        qrValue: 'https://ucapin.com/event/7/register'
     }
 ])
 
+// Store QR code data URLs
+const qrCodes = ref<Record<number, string>>({})
+
+// Generate QR codes for events
+const generateQRCode = async (eventId: number, qrValue: string) => {
+    try {
+        const qrDataUrl = await QRCode.toDataURL(qrValue, {
+            width: 150,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#ffffff'
+            }
+        })
+        qrCodes.value[eventId] = qrDataUrl
+    } catch (error) {
+        console.error('Error generating QR code:', error)
+    }
+}
+
+// Generate QR codes on mount
+onMounted(() => {
+    events.value.forEach(event => {
+        generateQRCode(event.id, event.qrValue)
+    })
+})
+
 // Filter and search functionality
 const searchQuery = ref('')
-const selectedCategory = ref('all') // Changed from '' to 'all'
-const selectedStatus = ref('all') // Changed from '' to 'all'
+const selectedCategory = ref('all')
+const selectedStatus = ref('all')
 
 // Define select items with proper value props (not empty strings)
 const categoryItems = [
@@ -176,6 +210,31 @@ const clearFilters = () => {
     selectedCategory.value = 'all'
     selectedStatus.value = 'all'
 }
+
+// QR Code modal state
+const selectedEventForQR = ref<any>(null)
+const isQRModalOpen = ref(false)
+
+const openQRModal = (event: any) => {
+    selectedEventForQR.value = event
+    isQRModalOpen.value = true
+}
+
+const copyToClipboard = async (text: string) => {
+    try {
+        await navigator.clipboard.writeText(text)
+        toast.add({
+            title: 'Copied!',
+            description: 'QR value copied to clipboard',
+            color: 'success',
+            icon: 'i-lucide-check-circle'
+        })
+    } catch (error) {
+        console.error('Failed to copy:', error)
+    }
+}
+
+const toast = useToast()
 </script>
 
 <template>
@@ -187,7 +246,8 @@ const clearFilters = () => {
                     <h1 class="text-2xl font-semibold tracking-tight">Events</h1>
                     <p class="text-sm text-dimmed mt-1">Discover and join exciting events happening around you</p>
                 </div>
-                <UButton color="primary" variant="solid" class="flex items-center gap-2">
+                <UButton color="primary" variant="solid" class="flex items-center gap-2"
+                    @click="navigateTo('/dashboard/event/create')">
                     <Icon name="i-lucide-plus" class="w-4 h-4" />
                     Create Event
                 </UButton>
@@ -269,11 +329,20 @@ const clearFilters = () => {
                                     <span class="text-dimmed">Messages</span>
                                     <span class="text-foreground font-medium">{{ event.messages }} / {{
                                         event.maxMessages
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <UProgress :value="(event.messages / event.maxMessages) * 100" size="sm" color="primary"
                                     class="w-full" />
                             </div>
+
+                            <!-- QR Code Button
+                            <div class="pt-2">
+                                <UButton color="neutral" variant="outline" size="sm" class="w-full"
+                                    @click="openQRModal(event)">
+                                    <Icon name="i-lucide-qr-code" class="w-4 h-4 mr-2" />
+                                    Show QR Code
+                                </UButton>
+                            </div> -->
                         </div>
                     </div>
 
@@ -284,6 +353,7 @@ const clearFilters = () => {
                                 By {{ event.organizer }}
                             </div>
                             <UButton :color="event.status === 'past' ? 'neutral' : 'primary'"
+                                :to="`/dashboard/event/update/${event.id}`"
                                 :variant="event.status === 'past' ? 'outline' : 'solid'"
                                 :disabled="event.status === 'past'" size="sm">
                                 <template v-if="event.status === 'past'">
@@ -305,6 +375,55 @@ const clearFilters = () => {
                 <p class="text-sm text-dimmed">Try adjusting your search or filter criteria</p>
             </div>
         </div>
+
+        <!-- QR Code Modal -->
+        <UModal v-model:open="isQRModalOpen">
+            <UCard v-if="selectedEventForQR" class="text-center">
+                <template #header>
+                    <div class="flex justify-between items-center w-full">
+                        <h3 class="text-lg font-semibold">Event QR Code</h3>
+                        <UButton color="neutral" variant="ghost" icon="i-lucide-x" @click="isQRModalOpen = false" />
+                    </div>
+                </template>
+
+                <div class="space-y-6 py-4">
+                    <!-- Event Info -->
+                    <div>
+                        <h4 class="font-semibold mb-1">{{ selectedEventForQR.title }}</h4>
+                        <p class="text-sm text-dimmed">{{ formatDate(selectedEventForQR.date) }}</p>
+                    </div>
+
+                    <!-- QR Code Image -->
+                    <div class="flex justify-center">
+                        <div v-if="qrCodes[selectedEventForQR.id]" class="bg-white p-4 rounded-lg shadow-sm">
+                            <img :src="qrCodes[selectedEventForQR.id]" :alt="`QR Code for ${selectedEventForQR.title}`"
+                                class="w-48 h-48" />
+                        </div>
+                        <div v-else class="w-48 h-48 flex items-center justify-center bg-gray-100 rounded-lg">
+                            <Icon name="i-lucide-loader-2" class="w-8 h-8 animate-spin text-dimmed" />
+                        </div>
+                    </div>
+
+                    <!-- QR Value -->
+                    <div class="space-y-2">
+                        <p class="text-xs text-dimmed">Scan this QR code to register or access the event</p>
+                        <div class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <code class="flex-1 text-xs break-all">{{ selectedEventForQR.qrValue }}</code>
+                            <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-copy"
+                                @click="copyToClipboard(selectedEventForQR.qrValue)" />
+                        </div>
+                    </div>
+                </div>
+
+                <template #footer>
+                    <div class="flex justify-center">
+                        <UButton color="primary" variant="solid" @click="isQRModalOpen = false">
+                            Close
+                        </UButton>
+                    </div>
+                </template>
+            </UCard>
+        </UModal>
     </div>
 </template>
 

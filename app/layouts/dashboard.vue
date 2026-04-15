@@ -62,29 +62,20 @@ function getItems(state: 'collapsed' | 'expanded') {
             to: '/dashboard/event'
         },
         {
-            label: 'Wish-Wall',
-            icon: 'solar:display-broken',
-            to: '/wish-wall'
-        },
-        {
-            label: 'User',
-            icon: 'solar:users-group-two-rounded-broken',
-            to: '/user'
-        },
-        {
-            label: 'Settings',
-            icon: 'solar:settings-broken',
+            label: 'Messages & Wishes',
+            icon: 'solar:chat-round-like-broken',
             defaultOpen: true,
             children:
                 state === 'expanded'
                     ? [
                         {
-                            label: 'General',
-                            icon: 'i-lucide-house'
+                            label: 'Wishes Wall',
+                            icon: 'solar:display-broken',
+                            to: '/dashboard/wishes-wall',
                         },
                         {
-                            label: 'Team',
-                            icon: 'i-lucide-users'
+                            label: 'Messages',
+                            icon: 'solar:chat-line-broken'
                         },
                         {
                             label: 'Billing',
@@ -92,15 +83,21 @@ function getItems(state: 'collapsed' | 'expanded') {
                         }
                     ]
                     : []
-        }
+        },
+        {
+            label: 'User',
+            icon: 'solar:users-group-two-rounded-broken',
+            to: '/user'
+        },
+
     ] satisfies NavigationMenuItem[]
 }
 
 const user = ref({
     name: 'Benjamin Canac',
     avatar: {
-        src: 'https://github.com/benjamincanac.png',
-        alt: 'Benjamin Canac'
+        src: 'https://i.pinimg.com/236x/c4/7a/d4/c47ad41dc3877eff7190258fd24b70c4.jpg',
+        alt: 'User'
     }
 })
 
