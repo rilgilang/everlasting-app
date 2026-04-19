@@ -3,6 +3,9 @@ import type { DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
 
 const open = ref(true)
 
+const route = useRoute()
+const eventId = route.params.id as string
+
 const colorMode = useColorMode()
 
 const teams = ref([
@@ -54,45 +57,8 @@ function getItems(state: 'collapsed' | 'expanded') {
             label: 'Dashboard',
             icon: 'solar:chart-2-broken',
             badge: '4',
-            to: '/dashboard'
+            to: `/dashboard/${eventId}`
         },
-        {
-            label: 'Event',
-            icon: 'solar:calendar-broken',
-            to: '/dashboard/event'
-        },
-        {
-            label: 'Wish-Wall',
-            icon: 'solar:display-broken',
-            to: '/wish-wall'
-        },
-        {
-            label: 'User',
-            icon: 'solar:users-group-two-rounded-broken',
-            to: '/user'
-        },
-        {
-            label: 'Settings',
-            icon: 'solar:settings-broken',
-            defaultOpen: true,
-            children:
-                state === 'expanded'
-                    ? [
-                        {
-                            label: 'General',
-                            icon: 'i-lucide-house'
-                        },
-                        {
-                            label: 'Team',
-                            icon: 'i-lucide-users'
-                        },
-                        {
-                            label: 'Billing',
-                            icon: 'i-lucide-credit-card'
-                        }
-                    ]
-                    : []
-        }
     ] satisfies NavigationMenuItem[]
 }
 
