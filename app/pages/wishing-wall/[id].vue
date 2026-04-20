@@ -12,10 +12,38 @@ const isFullscreen = ref(false)
 const showControls = ref(true)
 let controlsTimeout: NodeJS.Timeout | null = null
 
-// Connect to WebSocket on mount
+// Fetch messages for this event
+const fetchMessages = async () => {
+    messageStore.isLoading = true
+    try {
+        const response = await fetch(`https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}/wishing-wall`)
+
+        if (!response.ok) {
+            throw new Error(`API returned ${response.status}`)
+        }
+
+        const result = await response.json()
+        const messagesData = result.data || result.messages || result || []
+
+        // Set messages in store
+        messageStore.setMessages(messagesData)
+
+        console.log(`${messagesData.length} messages loaded`)
+    } catch (error: any) {
+        console.error('Error fetching messages:', error)
+    } finally {
+        messageStore.isLoading = false
+    }
+}
+
+// Connect to WebSocket and fetch saved messages on mount
 onMounted(() => {
+    // First fetch saved messages
+    fetchMessages()
+
+    // Then connect to WebSocket for real-time updates
     messageStore.connectWebSocket(eventId)
-    
+
     // Auto-hide controls after 3 seconds
     startControlsTimeout()
 })
@@ -48,7 +76,6 @@ const formatDate = (dateString: string) => {
 // Get photo URL
 const getPhotoUrl = (photoPath: string) => {
     if (!photoPath) return 'https://placehold.co/400x400?text=No+Photo'
-    // Adjust this URL based on your API endpoint
     return `https://s3.ourmoment.my.id/wishing-wall/${photoPath}`
 }
 
@@ -81,7 +108,7 @@ const handleMouseMove = () => {
 
 // Handle keyboard navigation
 const handleKeyPress = (e: KeyboardEvent) => {
-    switch(e.key) {
+    switch (e.key) {
         case 'ArrowLeft':
             messageStore.previousMessage()
             startControlsTimeout()
@@ -120,15 +147,14 @@ const messageCount = computed(() => messageStore.messages.length)
 </script>
 
 <template>
-    <div 
-        class="fixed inset-0 bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900"
-        @mousemove="handleMouseMove"
-    >
+    <div class="fixed inset-0 bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900"
+        @mousemove="handleMouseMove">
         <!-- Loading State -->
         <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center">
             <div class="text-center">
-                <div class="w-20 h-20 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                <p class="text-white/80 text-lg">Connecting to wishing wall...</p>
+                <div class="w-20 h-20 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4">
+                </div>
+                <p class="text-white/80 text-lg">Loading messages...</p>
             </div>
         </div>
 
@@ -139,7 +165,7 @@ const messageCount = computed(() => messageStore.messages.length)
                 <h2 class="text-3xl font-bold text-white mb-2">No Messages Yet</h2>
                 <p class="text-white/60 text-lg">Waiting for wishes to arrive...</p>
                 <div class="mt-6 flex gap-2 justify-center">
-                                    <div class="w-2 h-2 bg-white/40 rounded-full animate-pulse"></div>
+                    <div class="w-2 h-2 bg-white/40 rounded-full animate-pulse"></div>
                     <div class="w-2 h-2 bg-white/40 rounded-full animate-pulse delay-150"></div>
                     <div class="w-2 h-2 bg-white/40 rounded-full animate-pulse delay-300"></div>
                 </div>
@@ -149,25 +175,19 @@ const messageCount = computed(() => messageStore.messages.length)
         <!-- Slideshow Content -->
         <div v-else class="relative h-full flex items-center justify-center p-8">
             <!-- Current Message Card -->
-            <transition 
-                name="slide" 
-                mode="out-in"
-            >
-                <div 
-                    :key="currentMessage?.id"
-                    class="max-w-4xl w-full bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden animate-slideIn"
-                >
+            <transition name="slide" mode="out-in">
+                <div :key="currentMessage?.id"
+                    class="max-w-4xl w-full bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden animate-slideIn">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
                         <!-- Photo Section -->
                         <div class="flex items-center justify-center">
                             <div class="relative">
-                                <div class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl"></div>
-                                <img 
-                                    :src="getPhotoUrl(currentMessage?.photo || '')" 
-                                    :alt="currentMessage?.name"
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl">
+                                </div>
+                                <img :src="getPhotoUrl(currentMessage?.photo || '')" :alt="currentMessage?.name"
                                     class="w-64 h-64 md:w-80 md:h-80 rounded-full object-cover shadow-2xl border-4 border-white/20 animate-zoomIn"
-                                    @error="(e) => (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=No+Photo'"
-                                />
+                                    @error="(e) => (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=No+Photo'" />
                             </div>
                         </div>
 
@@ -183,10 +203,12 @@ const messageCount = computed(() => messageStore.messages.length)
                             </div>
                             <div class="relative">
                                 <Icon name="i-lucide-quote" class="absolute -top-4 -left-4 w-8 h-8 text-white/20" />
-                                <p class="text-xl md:text-2xl text-white leading-relaxed animate-slideInRight delay-200">
+                                <p
+                                    class="text-xl md:text-2xl text-white leading-relaxed animate-slideInRight delay-200">
                                     "{{ currentMessage?.message }}"
                                 </p>
-                                <Icon name="i-lucide-quote" class="absolute -bottom-4 -right-4 w-8 h-8 text-white/20 rotate-180" />
+                                <Icon name="i-lucide-quote"
+                                    class="absolute -bottom-4 -right-4 w-8 h-8 text-white/20 rotate-180" />
                             </div>
                         </div>
                     </div>
@@ -194,54 +216,48 @@ const messageCount = computed(() => messageStore.messages.length)
             </transition>
 
             <!-- Navigation Arrows -->
-            <button 
-                v-show="showControls"
-                @click="messageStore.previousMessage"
-                class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 rounded-full p-3 transition-all duration-300 hover:scale-110"
-            >
+            <button v-show="showControls" @click="messageStore.previousMessage"
+                class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 rounded-full p-3 transition-all duration-300 hover:scale-110">
                 <Icon name="i-lucide-chevron-left" class="w-8 h-8 text-white" />
             </button>
-            
-            <button 
-                v-show="showControls"
-                @click="messageStore.nextMessage"
-                class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 rounded-full p-3 transition-all duration-300 hover:scale-110"
-            >
+
+            <button v-show="showControls" @click="messageStore.nextMessage"
+                class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 rounded-full p-3 transition-all duration-300 hover:scale-110">
                 <Icon name="i-lucide-chevron-right" class="w-8 h-8 text-white" />
             </button>
 
             <!-- Progress Bar -->
             <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
-                <div 
-                    class="h-full bg-gradient-to-r from-purple-400 to-pink-400 transition-all duration-7000 ease-linear"
-                    :style="{ width: `${((messageStore.currentMessageIndex + 1) / messageCount) * 100}%` }"
-                ></div>
+                <div class="h-full bg-gradient-to-r from-purple-400 to-pink-400 transition-all duration-7000 ease-linear"
+                    :style="{ width: `${((messageStore.currentMessageIndex + 1) / messageCount) * 100}%` }"></div>
             </div>
 
             <!-- Message Counter -->
-            <div v-show="showControls" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 rounded-full px-4 py-2 text-white text-sm backdrop-blur-sm">
+            <div v-show="showControls"
+                class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 rounded-full px-4 py-2 text-white text-sm backdrop-blur-sm">
                 {{ messageStore.currentMessageIndex + 1 }} / {{ messageCount }}
             </div>
 
             <!-- Controls Overlay -->
             <div v-show="showControls" class="absolute top-4 right-4 flex gap-2">
-                <button 
-                    @click="toggleFullscreen"
+                <button @click="toggleFullscreen"
                     class="bg-black/50 hover:bg-black/70 rounded-lg p-2 transition-all duration-300"
-                    :title="isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'"
-                >
-                    <Icon :name="isFullscreen ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'" class="w-5 h-5 text-white" />
+                    :title="isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)'">
+                    <Icon :name="isFullscreen ? 'i-lucide-minimize-2' : 'i-lucide-maximize-2'"
+                        class="w-5 h-5 text-white" />
                 </button>
             </div>
 
             <!-- Event ID Badge -->
-            <div v-show="showControls" class="absolute top-4 left-4 bg-black/50 rounded-lg px-3 py-1.5 text-white text-xs backdrop-blur-sm">
+            <div v-show="showControls"
+                class="absolute top-4 left-4 bg-black/50 rounded-lg px-3 py-1.5 text-white text-xs backdrop-blur-sm">
                 <Icon name="i-lucide-hash" class="w-3 h-3 inline mr-1" />
                 {{ eventId }}
             </div>
 
             <!-- Connection Status -->
-            <div v-show="showControls" class="absolute bottom-4 right-4 flex items-center gap-2 bg-black/50 rounded-lg px-3 py-1.5 text-white text-xs backdrop-blur-sm">
+            <div v-show="showControls"
+                class="absolute bottom-4 right-4 flex items-center gap-2 bg-black/50 rounded-lg px-3 py-1.5 text-white text-xs backdrop-blur-sm">
                 <div :class="[
                     'w-2 h-2 rounded-full',
                     messageStore.isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
@@ -251,8 +267,9 @@ const messageCount = computed(() => messageStore.messages.length)
         </div>
 
         <!-- Keyboard Shortcuts Hint -->
-        <div v-show="showControls" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 rounded-lg px-4 py-2 text-white text-xs backdrop-blur-sm mt-16">
-            ← →  |  F for fullscreen  |  ESC to exit
+        <div v-show="showControls"
+            class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 rounded-lg px-4 py-2 text-white text-xs backdrop-blur-sm mt-16">
+            ← → | F for fullscreen | ESC to exit
         </div>
     </div>
 </template>
@@ -263,6 +280,7 @@ const messageCount = computed(() => messageStore.messages.length)
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -274,6 +292,7 @@ const messageCount = computed(() => messageStore.messages.length)
         opacity: 0;
         transform: translateX(50px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -285,6 +304,7 @@ const messageCount = computed(() => messageStore.messages.length)
         opacity: 0;
         transform: translateX(-30px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -296,6 +316,7 @@ const messageCount = computed(() => messageStore.messages.length)
         opacity: 0;
         transform: scale(0.8);
     }
+
     to {
         opacity: 1;
         transform: scale(1);

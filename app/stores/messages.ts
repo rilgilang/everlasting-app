@@ -11,6 +11,7 @@ interface Message {
     updated_at: string
 }
 
+
 export const useMessageStore = defineStore('message', () => {
     const messages = ref<Message[]>([])
     const currentMessageIndex = ref(0)
@@ -133,6 +134,18 @@ export const useMessageStore = defineStore('message', () => {
         stopSlideshow()
     }
 
+    // Set messages (used for initial load)
+    const setMessages = (newMessages: Message[]) => {
+        messages.value = newMessages
+        currentMessageIndex.value = 0
+        
+        // Start slideshow if there are messages
+        if (messages.value.length > 0) {
+            startSlideshow()
+        }
+    }
+
+
     return {
         messages,
         currentMessageIndex,
@@ -142,6 +155,7 @@ export const useMessageStore = defineStore('message', () => {
         disconnect,
         nextMessage,
         previousMessage,
-        clearMessages
+        clearMessages,
+        setMessages
     }
 })
