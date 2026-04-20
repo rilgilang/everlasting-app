@@ -23,12 +23,12 @@ const fetchMessages = async () => {
         }
 
         const result = await response.json()
-        const messagesData = result.data || result.messages || result || []
+        if (!result.data == null) {
+            const messagesData = result.data || result.messages || result || []
 
-        // Set messages in store
-        messageStore.setMessages(messagesData)
-
-        console.log(`${messagesData.length} messages loaded`)
+            // Set messages in store
+            messageStore.setMessages(messagesData)
+        }
     } catch (error: any) {
         console.error('Error fetching messages:', error)
     } finally {
