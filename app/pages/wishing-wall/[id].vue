@@ -23,7 +23,7 @@ const fetchMessages = async () => {
         }
 
         const result = await response.json()
-        if (!result.data == null) {
+        if (result.data != null) {
             const messagesData = result.data || result.messages || result || []
 
             // Set messages in store
