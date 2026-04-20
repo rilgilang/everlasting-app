@@ -71,7 +71,7 @@ const formatTime = (timeString: string) => {
 const generateQRCode = async () => {
     try {
         // Get the current host URL
-        const qrValue = `${request.host}/guest/${eventId}/message`
+        const qrValue = `${request.host}/guest/${eventId}`
 
         const qrDataUrl = await QRCode.toDataURL(qrValue, {
             width: 1000,
