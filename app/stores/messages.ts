@@ -1,6 +1,5 @@
-// stores/message.ts
+// stores/messages.ts
 import { defineStore } from "pinia";
-import { Centrifuge } from "centrifuge";
 
 interface Message {
   id: string;
@@ -13,133 +12,26 @@ interface Message {
 }
 
 export const useMessageStore = defineStore("message", () => {
-  const runtimeConfig = useRuntimeConfig();
   const messages = ref<Message[]>([]);
   const currentMessageIndex = ref(0);
   const isConnected = ref(false);
   const isLoading = ref(true);
-  let centrifuge: any = null;
-  let subscription: any = null;
   let slideInterval: NodeJS.Timeout | null = null;
+  let eventSource: EventSource | null = null;
 
-  // Connect to Centrifugo WebSocket
-  const connectWebSocket = async (eventId: string) => {
-    // Close existing connection
-    if (centrifuge) {
-      centrifuge.disconnect();
-    }
+  // ─── Slideshow ─────────────────────────────────────────────────────────────
 
-    // Clear existing interval
-    if (slideInterval) {
-      clearInterval(slideInterval);
-    }
-
-    try {
-      const response = await fetch(
-        `${runtimeConfig.public.apiUrl}/v1/auth/generate`,
-      );
-
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      // Extract token from the response.data property
-      const token = result.data;
-
-      if (!token) {
-        throw new Error("No token received from API");
-      }
-
-      // Create Centrifugo instance
-      centrifuge = new Centrifuge(`${runtimeConfig.public.centrifugoUrl}`, {
-        token: token,
-      });
-
-      // Set up event handlers
-      centrifuge.on("connect", () => {
-        console.log("Centrifugo connected");
-        isConnected.value = true;
-        isLoading.value = false;
-      });
-
-      centrifuge.on("disconnect", () => {
-        console.log("Centrifugo disconnected");
-        isConnected.value = false;
-      });
-
-      centrifuge.on("error", (error: any) => {
-        console.error("Centrifugo error:", error);
-        isConnected.value = false;
-        isLoading.value = false;
-      });
-
-      // Create subscription to the event channel
-      subscription = centrifuge.newSubscription(`wishing-wall`);
-
-      // Handle publications (real-time messages)
-      subscription.on("publication", (ctx: any) => {
-        const data = ctx.data;
-        console.log("Message received via Centrifugo:", data);
-
-        // Check if message belongs to current event
-        if (data.event_id === eventId || data.event_id === undefined) {
-          const newMessage: Message = {
-            id: data.id || Date.now().toString(),
-            name: data.name,
-            message: data.message,
-            photo: data.photo,
-            event_id: data.event_id || eventId,
-            created_at: data.created_at || new Date().toISOString(),
-            updated_at: data.updated_at || new Date().toISOString(),
-          };
-
-          messages.value.push(newMessage);
-
-          // If this is the first message, start slideshow
-          if (messages.value.length === 1) {
-            startSlideshow();
-          }
-        }
-      });
-
-      // Handle subscription success
-      subscription.on("subscribe", () => {
-        console.log(`Subscribed to channel: event:${eventId}`);
-      });
-
-      subscription.on("error", (error: any) => {
-        console.error("Subscription error:", error);
-      });
-
-      // Subscribe to the channel
-      subscription.subscribe();
-
-      // Connect to Centrifugo
-      centrifuge.connect();
-    } catch (error) {
-      console.error("Failed to connect to Centrifugo:", error);
-      isConnected.value = false;
-      isLoading.value = false;
-    }
-  };
-
-  // Start slideshow
   const startSlideshow = () => {
-    if (slideInterval) {
-      clearInterval(slideInterval);
-    }
+    if (slideInterval) clearInterval(slideInterval);
 
     slideInterval = setInterval(() => {
       if (messages.value.length > 0) {
         currentMessageIndex.value =
           (currentMessageIndex.value + 1) % messages.value.length;
       }
-    }, 8000); // Change message every 8 seconds
+    }, 8000); // advance every 8 seconds
   };
 
-  // Stop slideshow
   const stopSlideshow = () => {
     if (slideInterval) {
       clearInterval(slideInterval);
@@ -147,7 +39,28 @@ export const useMessageStore = defineStore("message", () => {
     }
   };
 
-  // Go to next message
+  // ─── Mutations ─────────────────────────────────────────────────────────────
+
+  /** Push a single message into state (also called by the SSE listener). */
+  const addMessage = (data: Message) => {
+    messages.value.push(data);
+    if (messages.value.length === 1) startSlideshow();
+  };
+
+  /** Replace the full list (used for initial HTTP load). */
+  const setMessages = (newMessages: Message[]) => {
+    messages.value = newMessages;
+    currentMessageIndex.value = 0;
+    if (messages.value.length > 0) startSlideshow();
+  };
+
+  const clearMessages = () => {
+    messages.value = [];
+    currentMessageIndex.value = 0;
+  };
+
+  // ─── Navigation ────────────────────────────────────────────────────────────
+
   const nextMessage = () => {
     if (messages.value.length > 0) {
       currentMessageIndex.value =
@@ -155,7 +68,6 @@ export const useMessageStore = defineStore("message", () => {
     }
   };
 
-  // Go to previous message
   const previousMessage = () => {
     if (messages.value.length > 0) {
       currentMessageIndex.value =
@@ -165,46 +77,66 @@ export const useMessageStore = defineStore("message", () => {
     }
   };
 
-  // Clear messages
-  const clearMessages = () => {
-    messages.value = [];
-    currentMessageIndex.value = 0;
+  // ─── SSE connection ────────────────────────────────────────────────────────
+
+  /**
+   * Open a Server-Sent Events connection to /api/messages/stream.
+   * Every AMQP message consumed by the server plugin is forwarded here
+   * and pushed into the `messages` reactive array automatically.
+   *
+   * Call this once from your page/component (e.g. onMounted).
+   * EventSource handles reconnection automatically on network drops.
+   */
+  const connectSSE = () => {
+    if (eventSource) return; // already open
+
+    eventSource = new EventSource("/api/messages/stream");
+
+    eventSource.addEventListener("connected", () => {
+      console.log("📡 SSE connected to message stream");
+      isConnected.value = true;
+      isLoading.value = false;
+    });
+
+    eventSource.addEventListener("new-message", (e) => {
+      try {
+        const data: Message = JSON.parse((e as MessageEvent).data);
+        console.log("📩 New message via SSE:", data);
+        addMessage(data);
+      } catch (err) {
+        console.error("Failed to parse SSE message:", err);
+      }
+    });
+
+    eventSource.onerror = () => {
+      console.warn("⚠️ SSE connection error – browser will auto-reconnect");
+      isConnected.value = false;
+    };
   };
 
-  // Disconnect WebSocket
+  /** Close the SSE stream and stop the slideshow. */
   const disconnect = () => {
-    if (subscription) {
-      subscription.unsubscribe();
-      subscription = null;
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
     }
-    if (centrifuge) {
-      centrifuge.disconnect();
-      centrifuge = null;
-    }
+    isConnected.value = false;
     stopSlideshow();
   };
 
-  // Set messages (used for initial load)
-  const setMessages = (newMessages: Message[]) => {
-    messages.value = newMessages;
-    currentMessageIndex.value = 0;
-
-    // Start slideshow if there are messages
-    if (messages.value.length > 0) {
-      startSlideshow();
-    }
-  };
+  // ─── Public API ────────────────────────────────────────────────────────────
 
   return {
     messages,
     currentMessageIndex,
     isConnected,
     isLoading,
-    connectWebSocket,
+    connectSSE,
     disconnect,
+    addMessage,
+    setMessages,
+    clearMessages,
     nextMessage,
     previousMessage,
-    clearMessages,
-    setMessages,
   };
 });
