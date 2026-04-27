@@ -10,13 +10,14 @@ const eventId = route.params.id as string
 const messageStore = useMessageStore()
 const isFullscreen = ref(false)
 const showControls = ref(true)
+const runtimeConfig = useRuntimeConfig()
 let controlsTimeout: NodeJS.Timeout | null = null
 
 // Fetch messages for this event
 const fetchMessages = async () => {
     messageStore.isLoading = true
     try {
-        const response = await fetch(`https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}/wishing-wall`)
+        const response = await fetch(`${runtimeConfig.public.apiUrl}/v1/event/${eventId}/wishing-wall`)
 
         if (!response.ok) {
             throw new Error(`API returned ${response.status}`)

@@ -15,6 +15,7 @@
     "@iconify-json/simple-icons": "^1.2.77",
     "@nuxt/ui": "^4.6.1",
     "@pinia/nuxt": "^0.11.3",
+    "centrifuge": "^5.5.3",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
     "qrcode": "^1.5.4",
