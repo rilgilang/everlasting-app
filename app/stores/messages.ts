@@ -1,161 +1,142 @@
-// stores/message.ts
-import { defineStore } from 'pinia'
+// stores/messages.ts
+import { defineStore } from "pinia";
 
 interface Message {
-    id: string
-    name: string
-    message: string
-    photo: string
-    event_id: string
-    created_at: string
-    updated_at: string
+  id: string;
+  name: string;
+  message: string;
+  photo: string;
+  event_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
+export const useMessageStore = defineStore("message", () => {
+  const messages = ref<Message[]>([]);
+  const currentMessageIndex = ref(0);
+  const isConnected = ref(false);
+  const isLoading = ref(true);
+  let slideInterval: NodeJS.Timeout | null = null;
+  let eventSource: EventSource | null = null;
 
-export const useMessageStore = defineStore('message', () => {
-    const messages = ref<Message[]>([])
-    const currentMessageIndex = ref(0)
-    const isConnected = ref(false)
-    const isLoading = ref(true)
-    let ws: WebSocket | null = null
-    let slideInterval: NodeJS.Timeout | null = null
+  // ─── Slideshow ─────────────────────────────────────────────────────────────
 
-    // Connect to WebSocket
-    const connectWebSocket = (eventId: string) => {
-        // Close existing connection
-        if (ws) {
-            ws.close()
-        }
+  const startSlideshow = () => {
+    if (slideInterval) clearInterval(slideInterval);
 
-        // Clear existing interval
-        if (slideInterval) {
-            clearInterval(slideInterval)
-        }
+    slideInterval = setInterval(() => {
+      if (messages.value.length > 0) {
+        currentMessageIndex.value =
+          (currentMessageIndex.value + 1) % messages.value.length;
+      }
+    }, 8000); // advance every 8 seconds
+  };
 
-        // Connect to WebSocket
-        ws = new WebSocket('wss://s13783.blr1.piesocket.com/v3/1?api_key=7SEqHklfXLf4YSvF8OmgAd147ewDT0RT2tZrCE3f&notify_self=1')
-
-        ws.onopen = () => {
-            console.log('WebSocket connected')
-            isConnected.value = true
-            isLoading.value = false
-        }
-
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data)
-                console.log('Message received:', data)
-
-                // Check if message belongs to current event
-                if (data.event_id === eventId) {
-                    const newMessage: Message = {
-                        id: data.id || Date.now().toString(),
-                        name: data.name,
-                        message: data.message,
-                        photo: data.photo,
-                        event_id: data.event_id,
-                        created_at: data.created_at || new Date().toISOString(),
-                        updated_at: data.updated_at || new Date().toISOString()
-                    }
-
-                    messages.value.push(newMessage)
-
-                    // If this is the first message, start slideshow
-                    if (messages.value.length === 1) {
-                        startSlideshow()
-                    }
-                }
-            } catch (error) {
-                console.error('Error parsing message:', error)
-            }
-        }
-
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error)
-            isConnected.value = false
-            isLoading.value = false
-        }
-
-        ws.onclose = () => {
-            console.log('WebSocket disconnected')
-            isConnected.value = false
-        }
+  const stopSlideshow = () => {
+    if (slideInterval) {
+      clearInterval(slideInterval);
+      slideInterval = null;
     }
+  };
 
-    // Start slideshow
-    const startSlideshow = () => {
-        if (slideInterval) {
-            clearInterval(slideInterval)
-        }
+  // ─── Mutations ─────────────────────────────────────────────────────────────
 
-        slideInterval = setInterval(() => {
-            if (messages.value.length > 0) {
-                currentMessageIndex.value = (currentMessageIndex.value + 1) % messages.value.length
-            }
-        }, 8000) // Change message every 8 seconds
+  /** Push a single message into state (also called by the SSE listener). */
+  const addMessage = (data: Message) => {
+    messages.value.push(data);
+    if (messages.value.length === 1) startSlideshow();
+  };
+
+  /** Replace the full list (used for initial HTTP load). */
+  const setMessages = (newMessages: Message[]) => {
+    messages.value = newMessages;
+    currentMessageIndex.value = 0;
+    if (messages.value.length > 0) startSlideshow();
+  };
+
+  const clearMessages = () => {
+    messages.value = [];
+    currentMessageIndex.value = 0;
+  };
+
+  // ─── Navigation ────────────────────────────────────────────────────────────
+
+  const nextMessage = () => {
+    if (messages.value.length > 0) {
+      currentMessageIndex.value =
+        (currentMessageIndex.value + 1) % messages.value.length;
     }
+  };
 
-    // Stop slideshow
-    const stopSlideshow = () => {
-        if (slideInterval) {
-            clearInterval(slideInterval)
-            slideInterval = null
-        }
+  const previousMessage = () => {
+    if (messages.value.length > 0) {
+      currentMessageIndex.value =
+        currentMessageIndex.value === 0
+          ? messages.value.length - 1
+          : currentMessageIndex.value - 1;
     }
+  };
 
-    // Go to next message
-    const nextMessage = () => {
-        if (messages.value.length > 0) {
-            currentMessageIndex.value = (currentMessageIndex.value + 1) % messages.value.length
-        }
+  // ─── SSE connection ────────────────────────────────────────────────────────
+
+  /**
+   * Open a Server-Sent Events connection to /api/messages/stream.
+   * Every AMQP message consumed by the server plugin is forwarded here
+   * and pushed into the `messages` reactive array automatically.
+   *
+   * Call this once from your page/component (e.g. onMounted).
+   * EventSource handles reconnection automatically on network drops.
+   */
+  const connectSSE = () => {
+    if (eventSource) return; // already open
+
+    eventSource = new EventSource("/api/messages/stream");
+
+    eventSource.addEventListener("connected", () => {
+      console.log("📡 SSE connected to message stream");
+      isConnected.value = true;
+      isLoading.value = false;
+    });
+
+    eventSource.addEventListener("new-message", (e) => {
+      try {
+        const data: Message = JSON.parse((e as MessageEvent).data);
+        console.log("📩 New message via SSE:", data);
+        addMessage(data);
+      } catch (err) {
+        console.error("Failed to parse SSE message:", err);
+      }
+    });
+
+    eventSource.onerror = () => {
+      console.warn("⚠️ SSE connection error – browser will auto-reconnect");
+      isConnected.value = false;
+    };
+  };
+
+  /** Close the SSE stream and stop the slideshow. */
+  const disconnect = () => {
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
     }
+    isConnected.value = false;
+    stopSlideshow();
+  };
 
-    // Go to previous message
-    const previousMessage = () => {
-        if (messages.value.length > 0) {
-            currentMessageIndex.value = currentMessageIndex.value === 0
-                ? messages.value.length - 1
-                : currentMessageIndex.value - 1
-        }
-    }
+  // ─── Public API ────────────────────────────────────────────────────────────
 
-    // Clear messages
-    const clearMessages = () => {
-        messages.value = []
-        currentMessageIndex.value = 0
-    }
-
-    // Disconnect WebSocket
-    const disconnect = () => {
-        if (ws) {
-            ws.close()
-            ws = null
-        }
-        stopSlideshow()
-    }
-
-    // Set messages (used for initial load)
-    const setMessages = (newMessages: Message[]) => {
-        messages.value = newMessages
-        currentMessageIndex.value = 0
-        
-        // Start slideshow if there are messages
-        if (messages.value.length > 0) {
-            startSlideshow()
-        }
-    }
-
-
-    return {
-        messages,
-        currentMessageIndex,
-        isConnected,
-        isLoading,
-        connectWebSocket,
-        disconnect,
-        nextMessage,
-        previousMessage,
-        clearMessages,
-        setMessages
-    }
-})
+  return {
+    messages,
+    currentMessageIndex,
+    isConnected,
+    isLoading,
+    connectSSE,
+    disconnect,
+    addMessage,
+    setMessages,
+    clearMessages,
+    nextMessage,
+    previousMessage,
+  };
+});

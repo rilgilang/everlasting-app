@@ -6,6 +6,13 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
   ],
 
+  runtimeConfig: {
+        public: {
+            centrifugoUrl: process.env.CENTRIFUGO_URL || 'ws://localhost:6969/connection/websocket',
+            apiUrl: process.env.API_URL || 'http://localhost:8090/api'
+        }
+  },
+
   devtools: {
     enabled: true
   },

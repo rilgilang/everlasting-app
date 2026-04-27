@@ -5,6 +5,8 @@ import QRCode from 'qrcode'
 const request = useRequestURL()
 const route = useRoute()
 const eventId = route.params.id
+const runtimeConfig = useRuntimeConfig()
+
 
 interface Event {
     id: string
@@ -29,13 +31,15 @@ const error = ref(false)
 const qrCodeUrl = ref('')
 const toast = useToast()
 
+const API_URL = runtimeConfig.public.apiUrl || 'http://localhost:8090/api'
+
 // Fetch event data
 const fetchEvent = async () => {
     isLoading.value = true
     error.value = false
 
     try {
-        const response = await fetch(`https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}`)
+        const response = await fetch(`${API_URL}/v1/event/${eventId}`)
 
         if (!response.ok) {
             throw new Error(`API returned ${response.status}`)
