@@ -1,36 +1,35 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/eslint',
-    '@nuxt/ui',
-    '@pinia/nuxt',
-  ],
+  modules: ["@nuxt/eslint", "@nuxt/ui", "@pinia/nuxt"],
 
   runtimeConfig: {
-        public: {
-            centrifugoUrl: process.env.CENTRIFUGO_URL || 'ws://localhost:6969/connection/websocket',
-            apiUrl: process.env.API_URL || 'http://localhost:8090/api'
-        }
+    public: {
+      centrifugoUrl:
+        process.env.CENTRIFUGO_URL ||
+        "ws://localhost:6969/connection/websocket",
+      apiUrl:
+        process.env.API_URL || "https://everlasting-api.ourmoment.my.id/api",
+    },
   },
 
   devtools: {
-    enabled: true
+    enabled: true,
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ["~/assets/css/main.css"],
 
   routeRules: {
-    '/': { prerender: true }
+    "/": { prerender: true },
   },
 
-  compatibilityDate: '2025-01-15',
+  compatibilityDate: "2025-01-15",
 
   eslint: {
     config: {
       stylistic: {
-        commaDangle: 'never',
-        braceStyle: '1tbs'
-      }
-    }
-  }
-})
+        commaDangle: "never",
+        braceStyle: "1tbs",
+      },
+    },
+  },
+});
