@@ -17,9 +17,9 @@ services:
       - .env
     restart: always
     networks:
-      - everlasting-nt
+      - backend_everlasting-nt
 
 networks:
-  everlasting-nt:
+  backend_everlasting-nt:
     external: true
     driver: bridge
