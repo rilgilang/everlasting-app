@@ -16,3 +16,9 @@ services:
     env_file:
       - .env
     restart: always
+    networks:
+      - everlasting-nt
+
+networks:
+  everlasting-nt:
+    external: true
