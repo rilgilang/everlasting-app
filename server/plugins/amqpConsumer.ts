@@ -4,7 +4,7 @@ import { messageEmitter } from "../utils/messageEmitter";
 export default defineNitroPlugin(async (_nitroApp) => {
   try {
     const connection = await amqp.connect(
-      "amqp://guest:guest@rabbitmq:5672/everlasting",
+      "amqp://guest:guest@everlasting-rabbitmq:5672/everlasting",
     );
     const channel = await connection.createChannel();
     const queue = "everlasting_queue";
