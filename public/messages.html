@@ -1,0 +1,211 @@
+<!-- templates/wishes-story.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{eventTitle}}</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Playfair+Display:ital,wght@1,600&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      @media print {
+        @page {
+          margin: 0;
+        }
+        body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+      }
+
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: #0f172a;
+        background-image:
+          radial-gradient(
+            at 0% 0%,
+            rgba(30, 58, 138, 0.5) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 100% 0%,
+            rgba(88, 28, 135, 0.5) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 100% 100%,
+            rgba(15, 23, 42, 1) 0px,
+            transparent 50%
+          );
+        background-attachment: fixed;
+        color: #ffffff;
+        padding: 40px 15px;
+        min-height: 100vh;
+        -webkit-print-color-adjust: exact !important;
+      }
+
+      .container {
+        max-width: 480px; /* Kept narrow for Story feel */
+        margin: 0 auto;
+      }
+
+      .event-card {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 30px 15px;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .event-title {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        font-weight: 600;
+        line-height: 1.2;
+        margin-bottom: 8px;
+        color: #fff;
+      }
+
+      /* Grid Layout */
+      .messages-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 columns grid */
+        gap: 15px;
+      }
+
+      .message-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        break-inside: avoid;
+      }
+
+      .photo-container {
+        position: relative;
+        width: 100%;
+        height: 180px; /* Much smaller for grid */
+      }
+
+      .message-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .photo-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
+          transparent 20%,
+          rgba(15, 23, 42, 0.8)
+        );
+      }
+
+      .message-body {
+        padding: 15px;
+        margin-top: -40px; /* Smaller overlap */
+        position: relative;
+        z-index: 2;
+        flex-grow: 1;
+      }
+
+      .author-name {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .date {
+        font-size: 0.65rem;
+        color: #6366f1;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+      }
+
+      .quote-box {
+        margin-top: 8px;
+        font-family: "Playfair Display", serif;
+        font-style: italic;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        color: #cbd5e1;
+        display: -webkit-box;
+        -webkit-line-clamp: 3; /* Limit text height in small grid */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .brand-footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #475569;
+        font-size: 0.6rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="event-card">
+        <h1 class="event-title">{{eventTitle}}</h1>
+        <p class="event-location">📍 {{eventLocation}}</p>
+        <p
+          class="event-description"
+          style="color: #94a3b8; font-size: 0.9rem; margin-top: 10px"
+        >
+          {{eventDescription}}
+        </p>
+        <p
+          style="
+            margin-top: 15px;
+            font-size: 0.75rem;
+            color: #6366f1;
+            font-weight: 800;
+          "
+        >
+          {{eventDate}} • {{totalMessages}} WISHES
+        </p>
+      </div>
+
+      <div class="messages-list">
+        {{#each messages}}
+        <div class="message-card">
+          <div class="photo-container">
+            <img src="{{photoUrl}}" class="message-photo" />
+            <div class="photo-overlay"></div>
+          </div>
+
+          <div class="message-body">
+            <div class="author-info">
+              <p class="date">{{createdAt}}</p>
+              <h2 class="author-name">{{name}}</h2>
+            </div>
+
+            <div class="quote-box">"{{message}}"</div>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="brand-footer">Powered by Everlasting</div>
+    </div>
+  </body>
+</html>
