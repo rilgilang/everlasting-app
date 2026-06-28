@@ -260,18 +260,14 @@ const progressPercent = computed(() =>
                   <!-- Outer glow -->
                   <div class="absolute inset-0 bg-gradient-to-br from-rose-500/30 to-amber-500/30 rounded-full blur-[60px] scale-110" />
 
-                  <!-- Gold gradient ring -->
-                  <div class="absolute -inset-3 bg-gradient-to-br from-amber-400 via-rose-500 to-amber-400 rounded-full p-1">
-                    <div class="w-full h-full bg-gradient-to-br from-rose-900 to-rose-950 rounded-full p-1">
-                      <div class="w-full h-full bg-gradient-to-br from-amber-400 via-rose-500 to-amber-400 rounded-full p-0.5">
-                        <img
-                          :src="getPhotoUrl(currentMessage?.photo || '')"
-                          :alt="currentMessage?.name"
-                          class="w-64 h-64 md:w-72 md:h-72 rounded-full object-cover shadow-2xl"
-                          @error="(e) => ((e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=No+Photo')"
-                        >
-                      </div>
-                    </div>
+                  <!-- Gradient ring like Instagram story -->
+                  <div class="rounded-full p-[3px] bg-gradient-to-br from-amber-400 via-rose-500 to-amber-400 shadow-2xl">
+                    <img
+                      :src="getPhotoUrl(currentMessage?.photo || '')"
+                      :alt="currentMessage?.name"
+                      class="w-64 h-64 md:w-72 md:h-72 rounded-full object-cover border-2 border-white/10"
+                      @error="(e) => ((e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=No+Photo')"
+                    >
                   </div>
                 </div>
               </div>

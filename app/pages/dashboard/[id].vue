@@ -266,245 +266,198 @@ onMounted(() => {
   fetchEventInfo()
   fetchMessages()
 })
-
-onUnmounted(() => {
-  // cleanup
-})
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-stone-50 via-rose-50 to-amber-50 relative">
-    <!-- Decorative background -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden">
-      <div class="absolute top-20 right-20 w-64 h-64 bg-rose-200/20 rounded-full blur-3xl" />
-      <div class="absolute bottom-40 left-20 w-48 h-48 bg-amber-200/20 rounded-full blur-3xl" />
-    </div>
-
-    <div class="relative z-10 p-6 space-y-6">
-      <!-- Header with Event Info -->
+  <div class="min-h-screen bg-stone-50">
+    <div class="p-6 space-y-5">
+      <!-- Header -->
       <div class="flex flex-col lg:flex-row justify-between items-start gap-4">
         <div>
-          <div class="flex items-center gap-2 mb-2">
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center shadow-md">
-              <Icon
-                name="i-lucide-calendar"
-                class="w-4 h-4 text-white"
-              />
-            </div>
-            <span class="text-sm text-rose-600 font-semibold">Event Dashboard</span>
-          </div>
-          <h1 class="text-3xl font-serif font-bold bg-gradient-to-r from-rose-600 to-amber-600 bg-clip-text text-transparent">
+          <h1 class="text-2xl font-bold text-stone-900">
             {{ eventInfo.title }}
           </h1>
-          <p class="text-sm text-stone-500 mt-1">
-            {{ eventInfo.description || "Monitor and manage messages for this event" }}
+          <p class="text-stone-500 text-sm mt-0.5">
+            {{ eventInfo.description || 'Monitor and manage messages for this event' }}
           </p>
-          <div class="flex gap-4 mt-3 text-sm text-stone-500 flex-wrap">
+          <div class="flex gap-3 mt-2 text-xs text-stone-400">
             <span
               v-if="eventInfo.location"
-              class="flex items-center gap-1.5"
+              class="flex items-center gap-1"
             >
               <Icon
                 name="i-lucide-map-pin"
-                class="w-3.5 h-3.5 text-rose-500"
-              />
-              {{ eventInfo.location }}
+                class="w-3 h-3"
+              />{{ eventInfo.location }}
             </span>
             <span
               v-if="eventInfo.category"
-              class="flex items-center gap-1.5"
+              class="flex items-center gap-1"
             >
               <Icon
                 name="i-lucide-tag"
-                class="w-3.5 h-3.5 text-amber-500"
-              />
-              {{ eventInfo.category }}
+                class="w-3 h-3"
+              />{{ eventInfo.category }}
             </span>
             <span
               v-if="eventInfo.organizer"
-              class="flex items-center gap-1.5"
+              class="flex items-center gap-1"
             >
               <Icon
                 name="i-lucide-user"
-                class="w-3.5 h-3.5 text-rose-500"
-              />
-              {{ eventInfo.organizer }}
+                class="w-3 h-3"
+              />{{ eventInfo.organizer }}
             </span>
           </div>
         </div>
-        <div class="flex gap-3">
-          <UButton
-            color="neutral"
-            variant="outline"
-            :loading="isLoading"
-            class="rounded-xl border-stone-300"
+        <div class="flex gap-2">
+          <button
+            class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-700 hover:bg-stone-50 hover:border-stone-300 transition-all shadow-sm"
+            :disabled="isLoading"
             @click="refreshMessages"
           >
             <Icon
               name="i-lucide-refresh-cw"
-              class="w-4 h-4 mr-2"
+              class="w-4 h-4 mr-1.5 inline"
+              :class="{ 'animate-spin': isLoading }"
             />
             Refresh
-          </UButton>
-          <UButton
-            color="primary"
-            variant="solid"
-            class="rounded-xl shadow-lg shadow-rose-300/50"
+          </button>
+          <button
+            class="px-4 py-2 bg-gradient-to-r from-rose-600 to-amber-600 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity shadow-sm"
             @click="downloadMessages"
           >
             <Icon
               name="i-lucide-download"
-              class="w-4 h-4 mr-2"
+              class="w-4 h-4 mr-1.5 inline"
             />
             Download
-          </UButton>
+          </button>
         </div>
       </div>
 
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div class="group bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100/50 hover:shadow-xl hover:shadow-rose-200/40 transition-all duration-300">
+      <!-- Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl border border-stone-200 p-5 shadow-sm">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-stone-500 font-medium mb-1">
+              <p class="text-stone-500 text-xs font-medium uppercase tracking-wider">
                 Total Messages
               </p>
-              <p class="text-4xl font-serif font-bold text-stone-800">
+              <p class="text-3xl font-bold text-stone-900 mt-1">
                 {{ stats.total }}
               </p>
             </div>
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center shadow-lg shadow-rose-200/50 group-hover:scale-110 transition-transform">
+            <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
               <Icon
                 name="i-lucide-message-circle"
-                class="w-7 h-7 text-white"
+                class="w-5 h-5 text-rose-600"
               />
             </div>
           </div>
         </div>
 
-        <div class="group bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-amber-100/20 border border-amber-100/50 hover:shadow-xl hover:shadow-amber-200/40 transition-all duration-300">
+        <div class="bg-white rounded-xl border border-stone-200 p-5 shadow-sm">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-stone-500 font-medium mb-1">
-                Today's Messages
+              <p class="text-stone-500 text-xs font-medium uppercase tracking-wider">
+                Today
               </p>
-              <p class="text-4xl font-serif font-bold text-stone-800">
+              <p class="text-3xl font-bold text-stone-900 mt-1">
                 {{ stats.today }}
               </p>
             </div>
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-200/50 group-hover:scale-110 transition-transform">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
               <Icon
                 name="i-lucide-calendar"
-                class="w-7 h-7 text-white"
+                class="w-5 h-5 text-amber-600"
               />
             </div>
           </div>
         </div>
 
-        <div class="group bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100/50 hover:shadow-xl hover:shadow-rose-200/40 transition-all duration-300">
+        <div class="bg-white rounded-xl border border-stone-200 p-5 shadow-sm">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-stone-500 font-medium mb-1">
+              <p class="text-stone-500 text-xs font-medium uppercase tracking-wider">
                 Active Users
               </p>
-              <p class="text-4xl font-serif font-bold text-stone-800">
+              <p class="text-3xl font-bold text-stone-900 mt-1">
                 {{ stats.activeUsers }}
               </p>
             </div>
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-200/50 group-hover:scale-110 transition-transform">
+            <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
               <Icon
                 name="i-lucide-users"
-                class="w-7 h-7 text-white"
+                class="w-5 h-5 text-rose-600"
               />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Connection Status & Event ID -->
-      <div class="flex items-center justify-between bg-white/60 backdrop-blur-xl rounded-xl px-5 py-3 border border-rose-100/50">
+      <!-- Status & Search -->
+      <div class="flex items-center justify-between bg-white rounded-xl border border-stone-200 px-4 py-2.5 shadow-sm">
         <div class="flex items-center gap-2">
-          <div
-            :class="[
-              'w-2.5 h-2.5 rounded-full',
-              isWebSocketConnected
-                ? 'bg-green-500 animate-pulse'
-                : 'bg-red-400'
-            ]"
+          <div :class="['w-2 h-2 rounded-full', isWebSocketConnected ? 'bg-green-500' : 'bg-red-400']" />
+          <span class="text-xs text-stone-500">WebSocket: {{ isWebSocketConnected ? 'Connected' : 'Disconnected' }}</span>
+        </div>
+        <span class="text-xs text-stone-500">ID: <span class="font-mono font-semibold text-stone-700">{{ eventId }}</span></span>
+      </div>
+
+      <div class="bg-white rounded-xl border border-stone-200 p-3 shadow-sm">
+        <div class="relative">
+          <Icon
+            name="i-lucide-search"
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400"
           />
-          <span class="text-sm text-stone-600 font-medium">
-            WebSocket: {{ isWebSocketConnected ? "Connected" : "Disconnected" }}
-          </span>
-        </div>
-        <div class="text-sm text-stone-500">
-          Event ID: <span class="font-mono font-semibold text-stone-700 bg-stone-100 px-2 py-0.5 rounded">{{ eventId }}</span>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search messages..."
+            class="w-full bg-stone-50 border border-stone-200 rounded-lg pl-9 pr-3 py-2 text-sm text-stone-800 placeholder-stone-400 outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400/30 transition-all"
+          >
         </div>
       </div>
 
-      <!-- Search Bar -->
-      <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-lg shadow-rose-100/20 border border-rose-100/50">
-        <UInput
-          v-model="searchQuery"
-          placeholder="Search messages by name or content..."
-          icon="i-lucide-search"
-          size="lg"
-          class="w-full"
-        />
-      </div>
-
-      <!-- Loading State -->
+      <!-- Loading -->
       <div
         v-if="isLoading"
-        class="flex justify-center py-16"
+        class="text-center py-20"
       >
-        <div class="text-center">
-          <div class="w-16 h-16 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin mx-auto mb-4" />
-          <p class="text-stone-600 font-medium">
-            Loading messages...
-          </p>
-        </div>
+        <div class="w-10 h-10 border-3 border-stone-200 border-t-rose-500 rounded-full animate-spin mx-auto mb-3" />
+        <p class="text-stone-500 text-sm">
+          Loading messages...
+        </p>
       </div>
 
-      <!-- Messages List -->
+      <!-- Messages -->
       <div
         v-else-if="filteredMessages.length > 0"
-        class="space-y-4"
+        class="space-y-3"
       >
-        <div class="flex items-center justify-between bg-white/60 backdrop-blur-xl rounded-xl px-5 py-3 border border-rose-100/50">
-          <span class="text-sm text-stone-600 font-medium">
-            Showing <span class="text-rose-600 font-semibold">{{ filteredMessages.length }}</span> of <span class="text-stone-800 font-semibold">{{ messages.length }}</span> messages
-          </span>
-        </div>
+        <p class="text-xs text-stone-500">
+          Showing {{ filteredMessages.length }} of {{ messages.length }} messages
+        </p>
 
         <div
           v-for="message in filteredMessages"
           :key="message.id"
-          class="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg shadow-rose-100/20 border border-rose-100/50 p-5 hover:shadow-xl hover:shadow-rose-200/40 hover:border-rose-200 transition-all duration-300"
+          class="bg-white rounded-xl border border-stone-200 p-4 hover:border-stone-300 hover:shadow-md transition-all"
         >
-          <div class="flex gap-4">
-            <!-- Avatar / Photo -->
-            <div class="flex-shrink-0">
-              <div class="w-14 h-14 rounded-full overflow-hidden bg-stone-200 ring-2 ring-rose-200 group-hover:ring-rose-300 transition-all shadow-md">
-                <img
-                  :src="getPhotoUrl(message.photo)"
-                  :alt="message.name"
-                  class="w-full h-full object-cover"
-                  @error="(e) => ((e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=User')"
-                >
-              </div>
-            </div>
-
-            <!-- Message Content -->
+          <div class="flex gap-3">
+            <img
+              :src="getPhotoUrl(message.photo)"
+              :alt="message.name"
+              class="w-10 h-10 rounded-full object-cover mt-0.5"
+              @error="(e) => ((e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=User')"
+            >
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                <h3 class="font-semibold text-stone-800 text-lg">
-                  {{ message.name }}
-                </h3>
-                <span class="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
-                  {{ formatDate(message.created_at) }}
-                </span>
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="font-semibold text-stone-900 text-sm">{{ message.name }}</span>
+                <span class="text-xs text-stone-400">{{ formatDate(message.created_at) }}</span>
               </div>
-              <p class="text-stone-700 leading-relaxed">
+              <p class="text-stone-600 text-sm leading-relaxed">
                 {{ message.message }}
               </p>
             </div>
@@ -512,35 +465,33 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Empty State -->
+      <!-- Empty -->
       <div
         v-else
         class="text-center py-20"
       >
-        <div class="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div class="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Icon
             name="i-lucide-message-circle"
-            class="w-12 h-12 text-rose-400"
+            class="w-8 h-8 text-stone-400"
           />
         </div>
-        <h3 class="text-2xl font-serif font-bold text-stone-800 mb-2">
+        <h3 class="text-lg font-semibold text-stone-700 mb-1">
           No Messages Yet
         </h3>
-        <p class="text-stone-500 mb-6">
+        <p class="text-stone-500 text-sm mb-4">
           Messages from guests will appear here
         </p>
-        <UButton
-          color="primary"
-          variant="outline"
-          class="rounded-xl border-rose-200 hover:border-rose-300"
+        <button
+          class="px-4 py-2 bg-white border border-stone-200 rounded-xl text-sm font-medium text-stone-700 hover:bg-stone-50 transition-all shadow-sm"
           @click="refreshMessages"
         >
           <Icon
             name="i-lucide-refresh-cw"
-            class="w-4 h-4 mr-2"
+            class="w-4 h-4 mr-1.5 inline"
           />
           Refresh
-        </UButton>
+        </button>
       </div>
     </div>
   </div>

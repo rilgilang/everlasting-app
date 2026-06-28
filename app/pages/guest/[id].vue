@@ -218,388 +218,318 @@ onMounted(() => {
   fetchEventData()
   startCamera()
 })
-
-const messageCharCount = computed(() => formData.value.message.length)
-const charProgress = computed(() => (messageCharCount.value / 500) * 100)
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-stone-50 via-rose-50 to-amber-50 relative">
-    <!-- Decorative background -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden">
-      <div class="absolute top-20 left-10 w-40 h-40 bg-rose-200/20 rounded-full blur-3xl" />
-      <div class="absolute bottom-40 right-20 w-48 h-48 bg-amber-200/20 rounded-full blur-3xl" />
-    </div>
+  <div class="min-h-screen bg-stone-950 text-white relative overflow-hidden">
+    <!-- Background gradient -->
+    <div class="absolute inset-0 bg-gradient-to-br from-rose-950 via-stone-950 to-amber-950" />
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-800/20 via-transparent to-transparent" />
 
-    <div class="relative z-10 container max-w-2xl mx-auto px-4 py-8">
-      <!-- Step Progress Indicator -->
-      <div class="flex items-center justify-center mb-10">
-        <div class="flex items-center gap-3">
+    <div class="relative z-10 container max-w-lg mx-auto px-4 py-8">
+      <!-- Step Progress -->
+      <div class="flex items-center justify-center gap-2 mb-12">
+        <div
+          v-for="step in 3"
+          :key="step"
+          :class="[
+            'flex items-center gap-2',
+            step < 3 ? 'after:content-[\'\'] after:w-8 after:h-0.5 after:rounded-full after:transition-colors after:duration-300' : ''
+          ]"
+        >
           <div
             :class="[
-              'flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm transition-all duration-300',
-              currentStep >= 1
-                ? 'bg-gradient-to-br from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-200/50'
-                : 'bg-stone-200 text-stone-500'
+              'flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold transition-all duration-300',
+              currentStep >= step
+                ? 'bg-gradient-to-br from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-500/30'
+                : 'bg-stone-800 text-stone-500'
             ]"
           >
             <Icon
-              v-if="currentStep > 1"
+              v-if="currentStep > step"
               name="i-lucide-check"
-              class="w-5 h-5"
+              class="w-4 h-4"
             />
-            <span v-else>1</span>
+            <span v-else>{{ step }}</span>
           </div>
-          <div :class="['w-16 h-1 rounded-full transition-all duration-500', currentStep >= 2 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-stone-200']" />
           <div
-            :class="[
-              'flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm transition-all duration-300',
-              currentStep >= 2
-                ? 'bg-gradient-to-br from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-200/50'
-                : 'bg-stone-200 text-stone-500'
-            ]"
-          >
-            <Icon
-              v-if="currentStep > 2"
-              name="i-lucide-check"
-              class="w-5 h-5"
-            />
-            <span v-else>2</span>
-          </div>
-          <div :class="['w-16 h-1 rounded-full transition-all duration-500', currentStep >= 3 ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-stone-200']" />
-          <div
-            :class="[
-              'flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm transition-all duration-300',
-              currentStep >= 3
-                ? 'bg-gradient-to-br from-rose-500 to-amber-500 text-white shadow-lg shadow-rose-200/50'
-                : 'bg-stone-200 text-stone-500'
-            ]"
-          >
-            <Icon
-              v-if="currentStep >= 3"
-              name="i-lucide-check"
-              class="w-5 h-5"
-            />
-            <span v-else>3</span>
-          </div>
+            v-if="step < 3"
+            :class="['w-8 h-0.5 rounded-full transition-all duration-300', currentStep > step ? 'bg-gradient-to-r from-rose-500 to-amber-500' : 'bg-stone-800']"
+          />
         </div>
       </div>
 
       <!-- Step 1: Selfie -->
       <div
         v-if="currentStep === 1"
-        class="space-y-6 animate-fadeIn"
+        class="animate-fadeIn"
       >
         <div class="text-center mb-8">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 shadow-xl shadow-rose-200/50 mb-4">
+          <div class="w-16 h-16 bg-gradient-to-br from-rose-500 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-rose-500/30">
             <Icon
               name="i-lucide-camera"
               class="w-8 h-8 text-white"
             />
           </div>
-          <h1 class="text-3xl font-serif font-bold bg-gradient-to-r from-rose-600 to-amber-600 bg-clip-text text-transparent mb-2">
+          <h1 class="text-2xl font-bold text-white mb-1">
             Take a Selfie
           </h1>
-          <p class="text-stone-600">
-            Smile! Your photo will appear with your message
+          <p class="text-stone-400 text-sm">
+            Your photo will appear with your message
           </p>
         </div>
 
-        <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl shadow-rose-100/30 border border-rose-100/50">
-          <div class="relative">
-            <div
-              v-if="!capturedPhoto"
-              class="relative aspect-video bg-gradient-to-br from-stone-900 to-stone-800 rounded-2xl overflow-hidden shadow-inner"
-            >
-              <video
-                ref="videoRef"
-                autoplay
-                playsinline
-                class="w-full h-full object-cover"
-              />
-              <!-- Instagram-style ring overlay -->
-              <div class="absolute inset-3 border-2 border-white/20 rounded-xl pointer-events-none" />
-              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div class="w-40 h-40 rounded-full border-3 border-white/40 shadow-lg" />
-              </div>
-              <!-- Camera flash effect -->
-              <div class="absolute inset-0 bg-white/0 pointer-events-none" />
-            </div>
-
-            <div
-              v-else
-              class="relative aspect-video bg-stone-900 rounded-2xl overflow-hidden shadow-inner"
-            >
-              <img
-                :src="capturedPhoto"
-                alt="Captured selfie"
-                class="w-full h-full object-cover"
-              >
-              <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <div class="bg-stone-900/80 border border-stone-800 rounded-2xl p-4">
+          <div
+            v-if="!capturedPhoto"
+            class="relative aspect-[3/4] bg-stone-950 rounded-xl overflow-hidden"
+          >
+            <video
+              ref="videoRef"
+              autoplay
+              playsinline
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div class="w-40 h-40 rounded-full border-2 border-white/20" />
             </div>
           </div>
 
-          <div class="mt-6 flex gap-3">
-            <UButton
+          <div
+            v-else
+            class="relative aspect-[3/4] bg-stone-950 rounded-xl overflow-hidden"
+          >
+            <img
+              :src="capturedPhoto"
+              alt="Captured selfie"
+              class="w-full h-full object-cover"
+            >
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          </div>
+
+          <div class="mt-4 flex gap-3">
+            <button
               v-if="!capturedPhoto"
-              color="primary"
-              variant="solid"
-              size="lg"
-              class="flex-1 rounded-xl shadow-lg shadow-rose-300/50"
+              class="flex-1 bg-gradient-to-r from-rose-600 to-amber-600 text-white font-semibold rounded-xl py-3 hover:opacity-90 transition-opacity"
               @click="capturePhoto"
             >
               <Icon
                 name="i-lucide-camera"
-                class="w-5 h-5 mr-2"
+                class="w-5 h-5 mr-2 inline"
               />
-              Capture Selfie
-            </UButton>
+              Capture
+            </button>
 
-            <UButton
-              v-else
-              color="neutral"
-              variant="outline"
-              size="lg"
-              class="flex-1 rounded-xl border-stone-300"
-              @click="retakePhoto"
-            >
-              <Icon
-                name="i-lucide-refresh-cw"
-                class="w-5 h-5 mr-2"
-              />
-              Retake
-            </UButton>
-
-            <UButton
-              v-if="capturedPhoto"
-              color="primary"
-              variant="solid"
-              size="lg"
-              class="flex-1 rounded-xl shadow-lg shadow-rose-300/50"
-              @click="nextStep"
-            >
-              Next
-              <Icon
-                name="i-lucide-arrow-right"
-                class="w-5 h-5 ml-2"
-              />
-            </UButton>
+            <template v-else>
+              <button
+                class="flex-1 bg-stone-800 text-stone-300 font-semibold rounded-xl py-3 hover:bg-stone-700 transition-colors"
+                @click="retakePhoto"
+              >
+                <Icon
+                  name="i-lucide-refresh-cw"
+                  class="w-5 h-5 mr-2 inline"
+                />
+                Retake
+              </button>
+              <button
+                class="flex-1 bg-gradient-to-r from-rose-600 to-amber-600 text-white font-semibold rounded-xl py-3 hover:opacity-90 transition-opacity"
+                @click="nextStep"
+              >
+                Next
+                <Icon
+                  name="i-lucide-arrow-right"
+                  class="w-5 h-5 ml-2 inline"
+                />
+              </button>
+            </template>
           </div>
         </div>
 
         <div
           v-if="eventData"
-          class="bg-white/60 backdrop-blur-xl rounded-2xl p-5 shadow-lg shadow-rose-100/20 border border-rose-100/50"
+          class="mt-4 text-center"
         >
-          <div class="text-center">
-            <p class="text-sm text-stone-500 mb-1">
-              Sending wish to
-            </p>
-            <h3 class="font-serif font-semibold text-lg text-stone-800">
-              {{ eventData.title }}
-            </h3>
-            <p class="text-xs text-stone-500 mt-1">
-              {{ eventData.location }} • {{ new Date(eventData.date).toLocaleDateString("id-ID") }}
-            </p>
-          </div>
+          <p class="text-stone-500 text-xs">
+            Sending wish to
+          </p>
+          <p class="text-stone-300 font-semibold text-sm">
+            {{ eventData.title }}
+          </p>
         </div>
       </div>
 
       <!-- Step 2: Form -->
       <div
         v-else-if="currentStep === 2"
-        class="space-y-6 animate-fadeIn"
+        class="animate-fadeIn"
       >
         <div class="text-center mb-8">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 shadow-xl shadow-rose-200/50 mb-4">
+          <div class="w-16 h-16 bg-gradient-to-br from-rose-500 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-rose-500/30">
             <Icon
               name="i-lucide-message-circle"
               class="w-8 h-8 text-white"
             />
           </div>
-          <h1 class="text-3xl font-serif font-bold bg-gradient-to-r from-rose-600 to-amber-600 bg-clip-text text-transparent mb-2">
+          <h1 class="text-2xl font-bold text-white mb-1">
             Your Wish
           </h1>
-          <p class="text-stone-600">
+          <p class="text-stone-400 text-sm">
             Share your thoughts and well wishes
           </p>
         </div>
 
-        <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-xl shadow-rose-100/30 border border-rose-100/50">
-          <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-full overflow-hidden bg-stone-200 ring-3 ring-rose-200 shadow-lg">
-              <img
-                :src="capturedPhoto || undefined"
-                alt="Your selfie"
-                class="w-full h-full object-cover"
-              >
-            </div>
+        <!-- Selfie Preview -->
+        <div class="bg-stone-900/80 border border-stone-800 rounded-2xl p-4 mb-4">
+          <div class="flex items-center gap-3">
+            <img
+              :src="capturedPhoto || undefined"
+              alt=""
+              class="w-12 h-12 rounded-full object-cover ring-2 ring-rose-600/50"
+            >
             <div class="flex-1">
-              <p class="text-sm text-stone-600 font-medium">
-                Your selfie will appear with your message
+              <p class="text-stone-400 text-sm">
+                Your selfie will appear
               </p>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                class="text-rose-600"
+              <button
+                class="text-rose-500 text-xs hover:text-rose-400 transition-colors"
                 @click="currentStep = 1"
               >
-                <Icon
-                  name="i-lucide-edit-2"
-                  class="w-3 h-3 mr-1"
-                />
                 Retake
-              </UButton>
+              </button>
             </div>
           </div>
         </div>
 
-        <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl shadow-rose-100/30 border border-rose-100/50">
-          <div class="space-y-5">
-            <UFormField
-              label="Your Name"
-              required
-              :error="errors.name"
+        <!-- Form -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-stone-300 mb-1">Your Name <span class="text-rose-500">*</span></label>
+            <input
+              v-model="formData.name"
+              type="text"
+              placeholder="Enter your name"
+              class="w-full bg-stone-900 border border-stone-700 rounded-xl px-4 py-3 text-white placeholder-stone-500 outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600 transition-all"
+              :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.name }"
             >
-              <UInput
-                v-model="formData.name"
-                placeholder="Enter your name"
-                size="lg"
-                class="w-full rounded-xl"
-                :class="{ 'border-red-500': errors.name }"
-              />
-            </UFormField>
+            <p
+              v-if="errors.name"
+              class="text-red-500 text-xs mt-1"
+            >
+              {{ errors.name }}
+            </p>
+          </div>
 
-            <UFormField
-              label="Your Wish / Message"
-              required
-              :error="errors.message"
-            >
-              <UTextarea
-                v-model="formData.message"
-                placeholder="Write your wish or message here..."
-                :rows="5"
-                size="lg"
-                class="w-full rounded-xl"
-                :class="{ 'border-red-500': errors.message }"
-              />
-              <template #hint>
-                <div class="flex items-center justify-between mt-2">
-                  <span class="text-xs text-stone-500">Share your thoughts, well wishes, or feedback</span>
-                  <div class="flex items-center gap-2">
-                    <div class="w-16 h-1.5 bg-stone-200 rounded-full overflow-hidden">
-                      <div
-                        :class="[
-                          'h-full rounded-full transition-all',
-                          messageCharCount > 500 ? 'bg-red-500' : 'bg-gradient-to-r from-rose-500 to-amber-500'
-                        ]"
-                        :style="{ width: `${Math.min(charProgress, 100)}%` }"
-                      />
-                    </div>
-                    <span
-                      :class="[
-                        'text-xs font-medium',
-                        messageCharCount > 500 ? 'text-red-500' : 'text-stone-500'
-                      ]"
-                    >
-                      {{ messageCharCount }}/500
-                    </span>
-                  </div>
-                </div>
-              </template>
-            </UFormField>
+          <div>
+            <label class="block text-sm font-medium text-stone-300 mb-1">Your Message <span class="text-rose-500">*</span></label>
+            <textarea
+              v-model="formData.message"
+              placeholder="Write your wish or message here..."
+              rows="5"
+              class="w-full bg-stone-900 border border-stone-700 rounded-xl px-4 py-3 text-white placeholder-stone-500 outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-600 transition-all resize-none"
+              :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': errors.message }"
+            />
+            <div class="flex justify-between mt-1">
+              <p
+                v-if="errors.message"
+                class="text-red-500 text-xs"
+              >
+                {{ errors.message }}
+              </p>
+              <p
+                v-else
+                class="text-stone-600 text-xs"
+              >
+                Share your thoughts, well wishes, or feedback
+              </p>
+              <span
+                :class="[
+                  'text-xs',
+                  formData.message.length > 500 ? 'text-red-500' : 'text-stone-500'
+                ]"
+              >
+                {{ formData.message.length }}/500
+              </span>
+            </div>
           </div>
         </div>
 
-        <div class="flex gap-3">
-          <UButton
-            color="neutral"
-            variant="outline"
-            size="lg"
-            class="flex-1 rounded-xl border-stone-300"
+        <div class="flex gap-3 mt-6">
+          <button
+            class="flex-1 bg-stone-800 text-stone-300 font-semibold rounded-xl py-3 hover:bg-stone-700 transition-colors"
             @click="currentStep = 1"
           >
             Back
-          </UButton>
-          <UButton
-            color="primary"
-            variant="solid"
-            size="lg"
-            class="flex-1 rounded-xl shadow-lg shadow-rose-300/50"
-            :loading="isLoading"
+          </button>
+          <button
+            class="flex-1 bg-gradient-to-r from-rose-600 to-amber-600 text-white font-semibold rounded-xl py-3 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isLoading"
             @click="submitMessage"
           >
-            Send Wish
             <Icon
-              name="i-lucide-send"
-              class="w-5 h-5 ml-2"
+              v-if="isLoading"
+              name="i-lucide-loader-2"
+              class="w-5 h-5 mr-2 animate-spin inline"
             />
-          </UButton>
+            <span v-else>Send Wish</span>
+            <Icon
+              v-if="!isLoading"
+              name="i-lucide-send"
+              class="w-5 h-5 ml-2 inline"
+            />
+          </button>
         </div>
       </div>
 
       <!-- Step 3: Success -->
       <div
         v-else-if="currentStep === 3"
-        class="space-y-6 animate-fadeIn"
+        class="text-center animate-fadeIn"
       >
-        <div class="text-center">
-          <!-- Success badge with animation -->
-          <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-rose-500 to-amber-500 mb-6 shadow-xl shadow-rose-300/50 animate-pulse-glow">
-            <Icon
-              name="i-lucide-check"
-              class="w-12 h-12 text-white"
-            />
-          </div>
-          <h1 class="text-4xl font-serif font-bold bg-gradient-to-r from-rose-600 to-amber-600 bg-clip-text text-transparent mb-2">
-            Thank You!
-          </h1>
-          <p class="text-stone-600 text-lg">
-            Your wish has been sent successfully
-          </p>
+        <div class="w-24 h-24 bg-gradient-to-br from-rose-500 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-rose-500/30">
+          <Icon
+            name="i-lucide-check"
+            class="w-12 h-12 text-white"
+          />
         </div>
+        <h1 class="text-3xl font-bold text-white mb-2">
+          Thank You!
+        </h1>
+        <p class="text-stone-400 mb-8">
+          Your wish has been sent successfully
+        </p>
 
-        <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl shadow-rose-100/30 border border-rose-100/50">
-          <div class="flex gap-4">
-            <div class="w-14 h-14 rounded-full overflow-hidden bg-stone-200 ring-2 ring-rose-200">
-              <img
-                :src="capturedPhoto || undefined"
-                alt="Your selfie"
-                class="w-full h-full object-cover"
-              >
-            </div>
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="font-semibold text-stone-800">{{ formData.name || "Anonymous" }}</span>
-                <span class="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">Just now</span>
+        <div class="bg-stone-900/80 border border-stone-800 rounded-2xl p-4 text-left">
+          <div class="flex gap-3">
+            <img
+              :src="capturedPhoto || undefined"
+              alt=""
+              class="w-12 h-12 rounded-full object-cover ring-2 ring-rose-600/50"
+            >
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-white">{{ formData.name || 'Anonymous' }}</span>
+                <span class="text-xs text-stone-500">Just now</span>
               </div>
-              <p class="text-stone-700 leading-relaxed">
+              <p class="text-stone-400 text-sm">
                 {{ formData.message }}
               </p>
             </div>
           </div>
         </div>
 
-        <div class="text-center">
-          <UButton
-            color="primary"
-            variant="outline"
-            size="lg"
-            class="rounded-xl border-rose-200 hover:border-rose-300"
-            @click="resetForm"
-          >
-            <Icon
-              name="i-lucide-plus"
-              class="w-5 h-5 mr-2"
-            />
-            Send Another Wish
-          </UButton>
-        </div>
+        <button
+          class="mt-6 text-rose-500 hover:text-rose-400 font-medium transition-colors"
+          @click="resetForm"
+        >
+          <Icon
+            name="i-lucide-plus"
+            class="w-4 h-4 mr-1 inline"
+          />
+          Send Another Wish
+        </button>
       </div>
     </div>
 
-    <!-- Hidden Canvas -->
     <canvas
       ref="canvasRef"
       class="hidden"
@@ -609,34 +539,8 @@ const charProgress = computed(() => (messageCharCount.value / 500) * 100)
 
 <style scoped>
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(244, 63, 94, 0.6);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.aspect-video {
-  aspect-ratio: 16 / 9;
-}
+.animate-fadeIn { animation: fadeIn 0.4s ease-out; }
 </style>
