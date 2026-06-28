@@ -1,269 +1,182 @@
-<!-- pages/dashboard/[id].vue -->
 <script setup lang="ts">
-definePageMeta({
-  layout: "dashboard",
-});
+import { useMessageStore } from '~/stores/messages'
+import html2canvas from 'html2canvas'
 
-import { useMessageStore } from "~/stores/messages";
-import html2canvas from "html2canvas";
+definePageMeta({
+  layout: 'dashboard'
+})
 
 interface Message {
-  id: string;
-  name: string;
-  message: string;
-  photo: string;
-  event_id: string;
-  created_at: string;
-  updated_at: string;
+  id: string
+  name: string
+  message: string
+  photo: string
+  event_id: string
+  created_at: string
+  updated_at: string
 }
 
-const route = useRoute();
-const eventId = route.params.id as string;
+const route = useRoute()
+const eventId = route.params.id as string
 
-const messageStore = useMessageStore();
-const toast = useToast();
+const _messageStore = useMessageStore()
+const toast = useToast()
 
-// Local state
-const messages = ref<Message[]>([]);
-const isLoading = ref(true);
-const searchQuery = ref("");
+const messages = ref<Message[]>([])
+const isLoading = ref(true)
+const searchQuery = ref('')
 const eventInfo = ref({
-  title: "",
-  description: "",
-  location: "",
-  category: "",
-  organizer: "",
-  status: "",
-});
+  title: '',
+  description: '',
+  location: '',
+  category: '',
+  organizer: '',
+  status: ''
+})
 const stats = ref({
   total: 0,
   today: 0,
-  activeUsers: 0,
-});
+  activeUsers: 0
+})
 
-// WebSocket connection status
-const isWebSocketConnected = ref(false);
-let ws: WebSocket | null = null;
+const isWebSocketConnected = ref(false)
+const _ws: WebSocket | null = null
 
-// Filtered messages based on search
 const filteredMessages = computed(() => {
-  if (!searchQuery.value) return messages.value;
+  if (!searchQuery.value) return messages.value
   return messages.value.filter(
-    (msg) =>
-      msg.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      msg.message.toLowerCase().includes(searchQuery.value.toLowerCase()),
-  );
-});
+    msg =>
+      msg.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+      || msg.message.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
 
-// Format date
 const formatDate = (dateString: string) => {
-  if (!dateString || dateString === "0001-01-01T00:00:00Z") return "Just now";
-  return new Date(dateString).toLocaleString("id-ID", {
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+  if (!dateString || dateString === '0001-01-01T00:00:00Z') return 'Just now'
+  return new Date(dateString).toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
-// Get photo URL
 const getPhotoUrl = (photoPath: string) => {
-  if (!photoPath) return "https://placehold.co/400x400?text=No+Photo";
-  return `https://s3.ourmoment.my.id/wishing-wall/${photoPath}`;
-};
+  if (!photoPath) return 'https://placehold.co/400x400?text=No+Photo'
+  return `https://s3.ourmoment.my.id/wishing-wall/${photoPath}`
+}
 
-// Fetch event info
 const fetchEventInfo = async () => {
   try {
     const response = await fetch(
-      `https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}`,
-    );
+      `https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}`
+    )
 
     if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
+      throw new Error(`API returned ${response.status}`)
     }
 
-    const data = await response.json();
-    const event = data.data || data;
+    const data = await response.json()
+    const event = data.data || data
 
     eventInfo.value = {
-      title: event.title || "Event",
-      description: event.description || "",
-      location: event.location || "",
-      category: event.category || "",
-      organizer: event.organizer || "",
-      status: event.status || "active",
-    };
-  } catch (error: any) {
-    console.error("Error fetching event info:", error);
-    // Use fallback event info
+      title: event.title || 'Event',
+      description: event.description || '',
+      location: event.location || '',
+      category: event.category || '',
+      organizer: event.organizer || '',
+      status: event.status || 'active'
+    }
+  } catch (error: unknown) {
+    console.error('Error fetching event info:', error)
     eventInfo.value = {
-      title: "Event Dashboard",
-      description: "View and manage messages for this event",
-      location: "Unknown",
-      category: "General",
-      organizer: "Event Organizer",
-      status: "active",
-    };
+      title: 'Event Dashboard',
+      description: 'View and manage messages for this event',
+      location: 'Unknown',
+      category: 'General',
+      organizer: 'Event Organizer',
+      status: 'active'
+    }
   }
-};
+}
 
-// Fetch messages for this event
 const fetchMessages = async () => {
-  isLoading.value = true;
+  isLoading.value = true
   try {
     const response = await fetch(
-      `https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}/wishing-wall`,
-    );
+      `https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}/wishing-wall`
+    )
 
     if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
+      throw new Error(`API returned ${response.status}`)
     }
 
-    const data = await response.json();
-    messages.value = data.data || data.messages || data || [];
+    const data = await response.json()
+    messages.value = data.data || data.messages || data || []
 
-    // Update stats
-    updateStats();
+    updateStats()
 
     toast.add({
-      title: "Success",
+      title: 'Success',
       description: `${messages.value.length} messages loaded`,
-      color: "success",
-      icon: "i-lucide-check-circle",
-    });
-  } catch (error: any) {
-    console.error("Error fetching messages:", error);
+      color: 'success',
+      icon: 'i-lucide-check-circle'
+    })
+  } catch (error: unknown) {
+    console.error('Error fetching messages:', error)
 
     toast.add({
-      title: "Warning",
-      description: "Using demo data. API endpoint not available.",
-      color: "warning",
-      icon: "i-lucide-alert-circle",
-    });
+      title: 'Warning',
+      description: 'Using demo data. API endpoint not available.',
+      color: 'warning',
+      icon: 'i-lucide-alert-circle'
+    })
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
-// Update statistics
 const updateStats = () => {
-  stats.value.total = messages.value.length;
+  stats.value.total = messages.value.length
 
-  const today = new Date().toDateString();
+  const today = new Date().toDateString()
   stats.value.today = messages.value.filter(
-    (msg) => new Date(msg.created_at).toDateString() === today,
-  ).length;
+    msg => new Date(msg.created_at).toDateString() === today
+  ).length
 
-  const uniqueUsers = new Set(messages.value.map((msg) => msg.name));
-  stats.value.activeUsers = uniqueUsers.size;
-};
+  const uniqueUsers = new Set(messages.value.map(msg => msg.name))
+  stats.value.activeUsers = uniqueUsers.size
+}
 
-// Connect to WebSocket for real-time updates
-// const connectWebSocket = () => {
-//     try {
-//         ws = new WebSocket('wss://s13783.blr1.piesocket.com/v3/1?api_key=7SEqHklfXLf4YSvF8OmgAd147ewDT0RT2tZrCE3f&notify_self=1')
-
-//         ws.onopen = () => {
-//             console.log('WebSocket connected')
-//             isWebSocketConnected.value = true
-//         }
-
-//         ws.onmessage = (event) => {
-//             try {
-//                 const data = JSON.parse(event.data)
-//                 console.log('New message received:', data)
-
-//                 // Check if message belongs to current event
-//                 if (data.event_id === eventId) {
-//                     const newMessage: Message = {
-//                         id: data.id || Date.now().toString(),
-//                         name: data.name,
-//                         message: data.message,
-//                         photo: data.photo,
-//                         event_id: data.event_id,
-//                         created_at: data.created_at || new Date().toISOString(),
-//                         updated_at: data.updated_at || new Date().toISOString()
-//                     }
-
-//                     // Add to messages list
-//                     messages.value.unshift(newMessage)
-
-//                     // Update stats
-//                     updateStats()
-
-//                     // Show notification
-//                     toast.add({
-//                         title: 'New Message!',
-//                         description: `New message from ${newMessage.name}`,
-//                         color: 'info',
-//                         icon: 'i-lucide-message-circle',
-//                         duration: 3000
-//                     })
-//                 }
-//             } catch (error) {
-//                 console.error('Error parsing WebSocket message:', error)
-//             }
-//         }
-
-//         ws.onerror = (error) => {
-//             console.error('WebSocket error:', error)
-//             isWebSocketConnected.value = false
-//         }
-
-//         ws.onclose = () => {
-//             console.log('WebSocket disconnected')
-//             isWebSocketConnected.value = false
-//             // Attempt to reconnect after 5 seconds
-//             setTimeout(() => {
-//                 if (!isWebSocketConnected.value) {
-//                     connectWebSocket()
-//                 }
-//             }, 5000)
-//         }
-//     } catch (error) {
-//         console.error('Failed to connect WebSocket:', error)
-//         isWebSocketConnected.value = false
-//     }
-// }
-
-// Refresh messages
 const refreshMessages = async () => {
-  await fetchMessages();
-};
+  await fetchMessages()
+}
 
 const downloadMessages = async () => {
   try {
-    // 1. Fetch Event Data & Wishing Wall Data in parallel
-    const [eventResponse, wishesResponse, template] = await Promise.all([
-      $fetch(`https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}`),
-      $fetch(
-        `https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}/wishing-wall`,
-      ),
-      $fetch("/messages.html", { parseResponse: (txt) => txt }),
-    ]);
+    const eventResponse = await $fetch<{ data: { title: string, location: string, description: string, date: string } }>(`https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}`)
+    const wishesResponse = await $fetch<{ data: Array<{ photo: string, name: string, message: string, created_at: string }> }>(`https://everlasting-api.ourmoment.my.id/api/v1/event/${eventId}/wishing-wall`)
+    const template = await $fetch<string>('/messages.html', { parseResponse: txt => txt })
 
-    const eventData = eventResponse.data;
-    const rawMessages = wishesResponse.data || [];
+    const eventData = eventResponse.data
+    const rawMessages = wishesResponse.data || []
 
-    // Date Formatter helper
     const formatDate = (dateStr: string) => {
-      return new Date(dateStr).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-    };
+      return new Date(dateStr).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })
+    }
 
     const getPhotoUrl = (photoPath: string) => {
-      if (!photoPath) return "https://placehold.co/400x400?text=No+Photo";
-      return `https://s3.ourmoment.my.id/wishing-wall/${photoPath}`;
-    };
+      if (!photoPath) return 'https://placehold.co/400x400?text=No+Photo'
+      return `https://s3.ourmoment.my.id/wishing-wall/${photoPath}`
+    }
 
-    // 2. Map Messages (Grid optimized)
     const messageHtmlArray = rawMessages
       .map(
-        (msg) => `
+        (msg: { photo: string, name: string, message: string, created_at: string }) => `
       <div class="message-card">
         <div class="photo-container">
           <img src="${getPhotoUrl(msg.photo)}" class="message-photo" crossorigin="anonymous">
@@ -277,290 +190,321 @@ const downloadMessages = async () => {
           <div class="quote-box">"${msg.message}"</div>
         </div>
       </div>
-    `,
+    `
       )
-      .join("");
+      .join('')
 
-    // 3. Inject Data into Template
-    // Using eventData for Title, Description, and the actual Event Date
     const finalHtml = template
       .replace(/{{eventTitle}}/g, eventData.title)
       .replace(/{{eventLocation}}/g, eventData.location)
-      .replace(/{{eventDescription}}/g, eventData.description) // Ensure this tag is in your HTML
+      .replace(/{{eventDescription}}/g, eventData.description)
       .replace(/{{eventDate}}/g, formatDate(eventData.date))
       .replace(/{{reportDate}}/g, formatDate(new Date().toISOString()))
       .replace(/{{totalMessages}}/g, rawMessages.length.toString())
-      .replace(/{{#each messages}}[\s\S]*?{{\/each}}/, messageHtmlArray);
+      .replace(/{{#each messages}}[\s\S]*?{{\/each}}/, messageHtmlArray)
 
-    // 4. Hidden Iframe Logic (Prevents Dashboard UI breakage)
-    const iframe = document.createElement("iframe");
+    const iframe = document.createElement('iframe')
     Object.assign(iframe.style, {
-      position: "fixed",
-      right: "100%",
-      bottom: "100%",
-      width: "480px",
-      border: "none",
-      visibility: "hidden",
-    });
-    document.body.appendChild(iframe);
+      position: 'fixed',
+      right: '100%',
+      bottom: '100%',
+      width: '480px',
+      border: 'none',
+      visibility: 'hidden'
+    })
+    document.body.appendChild(iframe)
 
-    const iframeDoc = iframe.contentWindow?.document;
-    if (!iframeDoc) return;
+    const iframeDoc = iframe.contentWindow?.document
+    if (!iframeDoc) return
 
-    iframeDoc.open();
-    iframeDoc.write(finalHtml);
-    iframeDoc.close();
+    iframeDoc.open()
+    iframeDoc.write(finalHtml)
+    iframeDoc.close()
 
-    // 5. Wait for images
-    const images = iframeDoc.querySelectorAll("img");
+    const images = iframeDoc.querySelectorAll('img')
     await Promise.all(
       Array.from(images).map((img) => {
-        if (img.complete) return Promise.resolve();
+        if (img.complete) return Promise.resolve()
         return new Promise((resolve) => {
-          img.onload = resolve;
-          img.onerror = resolve;
-        });
-      }),
-    );
+          img.onload = resolve
+          img.onerror = resolve
+        })
+      })
+    )
 
-    // 6. Capture to PNG
     const canvas = await html2canvas(iframeDoc.body, {
       useCORS: true,
       scale: 2,
-      backgroundColor: "#0f172a",
+      backgroundColor: '#0f172a',
       width: 480,
-      windowWidth: 480,
-    });
+      windowWidth: 480
+    })
 
-    // 7. Download
-    const link = document.createElement("a");
-    link.download = `${eventData.title.replace(/\s+/g, "-").toLowerCase()}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
+    const link = document.createElement('a')
+    link.download = `${eventData.title.replace(/\s+/g, '-').toLowerCase()}.png`
+    link.href = canvas.toDataURL('image/png')
+    link.click()
 
-    // 8. Cleanup
-    document.body.removeChild(iframe);
+    document.body.removeChild(iframe)
 
     toast.add({
-      title: "Image Generated",
-      description: "Your story is ready!",
-      color: "success",
-    });
+      title: 'Image Generated',
+      description: 'Your story is ready!',
+      color: 'success'
+    })
   } catch (error) {
-    console.error("Export failed:", error);
+    console.error('Export failed:', error)
     toast.add({
-      title: "Error",
-      description: "Could not fetch event data",
-      color: "red",
-    });
+      title: 'Error',
+      description: 'Could not fetch event data',
+      color: 'error'
+    })
   }
-};
+}
 
-// Initialize on mount
 onMounted(() => {
-  fetchEventInfo();
-  fetchMessages();
-  //   connectWebSocket();
-});
+  fetchEventInfo()
+  fetchMessages()
+})
 
-// Cleanup on unmount
 onUnmounted(() => {
-  //   if (ws) {
-  //     ws.close();
-  //   }
-});
+  // cleanup
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
-    <div class="p-6 space-y-6">
+  <div class="min-h-screen bg-gradient-to-br from-stone-50 via-rose-50 to-amber-50 relative">
+    <!-- Decorative background -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute top-20 right-20 w-64 h-64 bg-rose-200/20 rounded-full blur-3xl" />
+      <div class="absolute bottom-40 left-20 w-48 h-48 bg-amber-200/20 rounded-full blur-3xl" />
+    </div>
+
+    <div class="relative z-10 p-6 space-y-6">
       <!-- Header with Event Info -->
-      <div class="flex justify-between items-start">
+      <div class="flex flex-col lg:flex-row justify-between items-start gap-4">
         <div>
           <div class="flex items-center gap-2 mb-2">
-            <Icon name="i-lucide-calendar" class="w-5 h-5 text-primary-500" />
-            <span
-              class="text-sm text-primary-600 dark:text-primary-400 font-medium"
-              >Event Dashboard</span
-            >
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center shadow-md">
+              <Icon
+                name="i-lucide-calendar"
+                class="w-4 h-4 text-white"
+              />
+            </div>
+            <span class="text-sm text-rose-600 font-semibold">Event Dashboard</span>
           </div>
-          <h1
-            class="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white"
-          >
+          <h1 class="text-3xl font-serif font-bold bg-gradient-to-r from-rose-600 to-amber-600 bg-clip-text text-transparent">
             {{ eventInfo.title }}
           </h1>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {{
-              eventInfo.description ||
-              "Monitor and manage messages for this event"
-            }}
+          <p class="text-sm text-stone-500 mt-1">
+            {{ eventInfo.description || "Monitor and manage messages for this event" }}
           </p>
-          <div class="flex gap-4 mt-2 text-sm text-gray-500">
-            <span v-if="eventInfo.location" class="flex items-center gap-1">
-              <Icon name="i-lucide-map-pin" class="w-3 h-3" />
+          <div class="flex gap-4 mt-3 text-sm text-stone-500 flex-wrap">
+            <span
+              v-if="eventInfo.location"
+              class="flex items-center gap-1.5"
+            >
+              <Icon
+                name="i-lucide-map-pin"
+                class="w-3.5 h-3.5 text-rose-500"
+              />
               {{ eventInfo.location }}
             </span>
-            <span v-if="eventInfo.category" class="flex items-center gap-1">
-              <Icon name="i-lucide-tag" class="w-3 h-3" />
+            <span
+              v-if="eventInfo.category"
+              class="flex items-center gap-1.5"
+            >
+              <Icon
+                name="i-lucide-tag"
+                class="w-3.5 h-3.5 text-amber-500"
+              />
               {{ eventInfo.category }}
             </span>
-            <span v-if="eventInfo.organizer" class="flex items-center gap-1">
-              <Icon name="i-lucide-user" class="w-3 h-3" />
+            <span
+              v-if="eventInfo.organizer"
+              class="flex items-center gap-1.5"
+            >
+              <Icon
+                name="i-lucide-user"
+                class="w-3.5 h-3.5 text-rose-500"
+              />
               {{ eventInfo.organizer }}
             </span>
           </div>
         </div>
         <div class="flex gap-3">
           <UButton
-            color="primary"
+            color="neutral"
             variant="outline"
-            @click="refreshMessages"
             :loading="isLoading"
+            class="rounded-xl border-stone-300"
+            @click="refreshMessages"
           >
-            <Icon name="i-lucide-refresh-cw" class="w-4 h-4 mr-2" />
+            <Icon
+              name="i-lucide-refresh-cw"
+              class="w-4 h-4 mr-2"
+            />
             Refresh
           </UButton>
-          <UButton color="warning" variant="outline" @click="downloadMessages">
-            <Icon name="i-lucide-download" class="w-4 h-4 mr-2" />
-            Download Messages
+          <UButton
+            color="primary"
+            variant="solid"
+            class="rounded-xl shadow-lg shadow-rose-300/50"
+            @click="downloadMessages"
+          >
+            <Icon
+              name="i-lucide-download"
+              class="w-4 h-4 mr-2"
+            />
+            Download
           </UButton>
         </div>
       </div>
 
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <UCard class="shadow-sm">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="group bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100/50 hover:shadow-xl hover:shadow-rose-200/40 transition-all duration-300">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
+              <p class="text-sm text-stone-500 font-medium mb-1">
                 Total Messages
               </p>
-              <p class="text-3xl font-bold text-gray-900 dark:text-white">
+              <p class="text-4xl font-serif font-bold text-stone-800">
                 {{ stats.total }}
               </p>
             </div>
-            <div class="p-3 rounded-full bg-primary-100 dark:bg-primary-900/30">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center shadow-lg shadow-rose-200/50 group-hover:scale-110 transition-transform">
               <Icon
                 name="i-lucide-message-circle"
-                class="w-6 h-6 text-primary-600 dark:text-primary-400"
+                class="w-7 h-7 text-white"
               />
             </div>
           </div>
-        </UCard>
+        </div>
 
-        <UCard class="shadow-sm">
+        <div class="group bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-amber-100/20 border border-amber-100/50 hover:shadow-xl hover:shadow-amber-200/40 transition-all duration-300">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
+              <p class="text-sm text-stone-500 font-medium mb-1">
                 Today's Messages
               </p>
-              <p class="text-3xl font-bold text-gray-900 dark:text-white">
+              <p class="text-4xl font-serif font-bold text-stone-800">
                 {{ stats.today }}
               </p>
             </div>
-            <div class="p-3 rounded-full bg-green-100 dark:bg-green-900/30">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-200/50 group-hover:scale-110 transition-transform">
               <Icon
                 name="i-lucide-calendar"
-                class="w-6 h-6 text-green-600 dark:text-green-400"
+                class="w-7 h-7 text-white"
               />
             </div>
           </div>
-        </UCard>
+        </div>
 
-        <UCard class="shadow-sm">
+        <div class="group bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg shadow-rose-100/20 border border-rose-100/50 hover:shadow-xl hover:shadow-rose-200/40 transition-all duration-300">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
+              <p class="text-sm text-stone-500 font-medium mb-1">
                 Active Users
               </p>
-              <p class="text-3xl font-bold text-gray-900 dark:text-white">
+              <p class="text-4xl font-serif font-bold text-stone-800">
                 {{ stats.activeUsers }}
               </p>
             </div>
-            <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900/30">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-200/50 group-hover:scale-110 transition-transform">
               <Icon
                 name="i-lucide-users"
-                class="w-6 h-6 text-purple-600 dark:text-purple-400"
+                class="w-7 h-7 text-white"
               />
             </div>
           </div>
-        </UCard>
+        </div>
       </div>
 
-      <!-- Connection Status -->
-      <div class="flex items-center justify-between">
+      <!-- Connection Status & Event ID -->
+      <div class="flex items-center justify-between bg-white/60 backdrop-blur-xl rounded-xl px-5 py-3 border border-rose-100/50">
         <div class="flex items-center gap-2">
           <div
             :class="[
-              'w-2 h-2 rounded-full',
+              'w-2.5 h-2.5 rounded-full',
               isWebSocketConnected
                 ? 'bg-green-500 animate-pulse'
-                : 'bg-red-500',
+                : 'bg-red-400'
             ]"
-          ></div>
-          <span class="text-sm text-gray-600 dark:text-gray-400">
+          />
+          <span class="text-sm text-stone-600 font-medium">
             WebSocket: {{ isWebSocketConnected ? "Connected" : "Disconnected" }}
           </span>
         </div>
-        <div class="text-sm text-gray-500">
-          Event ID: <span class="font-mono font-semibold">{{ eventId }}</span>
+        <div class="text-sm text-stone-500">
+          Event ID: <span class="font-mono font-semibold text-stone-700 bg-stone-100 px-2 py-0.5 rounded">{{ eventId }}</span>
         </div>
       </div>
 
       <!-- Search Bar -->
-      <UInput
-        v-model="searchQuery"
-        placeholder="Search messages by name or content..."
-        icon="i-lucide-search"
-        size="lg"
-        class="w-full"
-      />
+      <div class="bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-lg shadow-rose-100/20 border border-rose-100/50">
+        <UInput
+          v-model="searchQuery"
+          placeholder="Search messages by name or content..."
+          icon="i-lucide-search"
+          size="lg"
+          class="w-full"
+        />
+      </div>
 
       <!-- Loading State -->
-      <div v-if="isLoading" class="flex justify-center py-12">
-        <UButton color="primary" variant="outline" loading>
-          Loading messages...
-        </UButton>
+      <div
+        v-if="isLoading"
+        class="flex justify-center py-16"
+      >
+        <div class="text-center">
+          <div class="w-16 h-16 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin mx-auto mb-4" />
+          <p class="text-stone-600 font-medium">
+            Loading messages...
+          </p>
+        </div>
       </div>
 
       <!-- Messages List -->
-      <div v-else-if="filteredMessages.length > 0" class="space-y-4">
-        <div class="text-sm text-gray-500 mb-2">
-          Showing {{ filteredMessages.length }} of
-          {{ messages.length }} messages
+      <div
+        v-else-if="filteredMessages.length > 0"
+        class="space-y-4"
+      >
+        <div class="flex items-center justify-between bg-white/60 backdrop-blur-xl rounded-xl px-5 py-3 border border-rose-100/50">
+          <span class="text-sm text-stone-600 font-medium">
+            Showing <span class="text-rose-600 font-semibold">{{ filteredMessages.length }}</span> of <span class="text-stone-800 font-semibold">{{ messages.length }}</span> messages
+          </span>
         </div>
 
         <div
           v-for="message in filteredMessages"
           :key="message.id"
-          class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-4 hover:shadow-md transition-all duration-200"
+          class="group bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg shadow-rose-100/20 border border-rose-100/50 p-5 hover:shadow-xl hover:shadow-rose-200/40 hover:border-rose-200 transition-all duration-300"
         >
           <div class="flex gap-4">
             <!-- Avatar / Photo -->
             <div class="flex-shrink-0">
-              <img
-                :src="getPhotoUrl(message.photo)"
-                :alt="message.name"
-                class="w-12 h-12 rounded-full object-cover"
-                @error="
-                  (e) =>
-                    ((e.target as HTMLImageElement).src =
-                      'https://placehold.co/400x400?text=User')
-                "
-              />
+              <div class="w-14 h-14 rounded-full overflow-hidden bg-stone-200 ring-2 ring-rose-200 group-hover:ring-rose-300 transition-all shadow-md">
+                <img
+                  :src="getPhotoUrl(message.photo)"
+                  :alt="message.name"
+                  class="w-full h-full object-cover"
+                  @error="(e) => ((e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=User')"
+                >
+              </div>
             </div>
 
             <!-- Message Content -->
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 class="font-semibold text-gray-900 dark:text-white">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                <h3 class="font-semibold text-stone-800 text-lg">
                   {{ message.name }}
                 </h3>
-                <span class="text-xs text-gray-500">
+                <span class="text-xs text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
                   {{ formatDate(message.created_at) }}
                 </span>
               </div>
-              <p class="text-gray-700 dark:text-gray-300">
+              <p class="text-stone-700 leading-relaxed">
                 {{ message.message }}
               </p>
             </div>
@@ -569,24 +513,32 @@ onUnmounted(() => {
       </div>
 
       <!-- Empty State -->
-      <div v-else class="text-center py-12">
-        <Icon
-          name="i-lucide-message-circle"
-          class="w-16 h-16 mx-auto text-gray-400 mb-4"
-        />
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <div
+        v-else
+        class="text-center py-20"
+      >
+        <div class="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Icon
+            name="i-lucide-message-circle"
+            class="w-12 h-12 text-rose-400"
+          />
+        </div>
+        <h3 class="text-2xl font-serif font-bold text-stone-800 mb-2">
           No Messages Yet
         </h3>
-        <p class="text-gray-500 dark:text-gray-400">
+        <p class="text-stone-500 mb-6">
           Messages from guests will appear here
         </p>
         <UButton
           color="primary"
           variant="outline"
-          class="mt-4"
+          class="rounded-xl border-rose-200 hover:border-rose-300"
           @click="refreshMessages"
         >
-          <Icon name="i-lucide-refresh-cw" class="w-4 h-4 mr-2" />
+          <Icon
+            name="i-lucide-refresh-cw"
+            class="w-4 h-4 mr-2"
+          />
           Refresh
         </UButton>
       </div>
@@ -595,17 +547,9 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
+.animate-spin { animation: spin 1s linear infinite; }
 </style>
